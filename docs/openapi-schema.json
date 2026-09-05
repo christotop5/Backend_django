@@ -1,0 +1,736 @@
+openapi: 3.0.3
+info:
+  title: VORA Django Geo & Optimization API
+  version: 1.0.0
+  description: Geolocation, zones, driver trajectories, turn optimization — OptimRoute
+    CM
+paths:
+  /api/v1/admin/reports:
+    get:
+      operationId: admin_reports_retrieve
+      tags:
+      - Admin
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/admin/stats:
+    get:
+      operationId: admin_stats_retrieve
+      tags:
+      - Admin
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/admin/zones:
+    get:
+      operationId: admin_zones_list
+      tags:
+      - Admin
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ZoneDetail'
+          description: ''
+  /api/v1/carrefours:
+    get:
+      operationId: carrefours_list
+      tags:
+      - Carrefours
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Carrefour'
+          description: ''
+    post:
+      operationId: carrefours_create
+      tags:
+      - Carrefours
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarrefourCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CarrefourCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CarrefourCreate'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Carrefour'
+          description: ''
+  /api/v1/drivers/{driver_id}/trajectories:
+    get:
+      operationId: drivers_trajectories_list
+      parameters:
+      - in: path
+        name: driver_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Driver Trajectories
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trajectory'
+          description: ''
+    post:
+      operationId: drivers_trajectories_create
+      parameters:
+      - in: path
+        name: driver_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Driver Trajectories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrajectoryCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TrajectoryCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TrajectoryCreate'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trajectory'
+          description: ''
+  /api/v1/drivers/{driver_id}/trajectories/{trajectory_id}:
+    put:
+      operationId: drivers_trajectories_update
+      parameters:
+      - in: path
+        name: driver_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: trajectory_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Driver Trajectories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrajectoryUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TrajectoryUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TrajectoryUpdate'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trajectory'
+          description: ''
+    delete:
+      operationId: drivers_trajectories_destroy
+      parameters:
+      - in: path
+        name: driver_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: trajectory_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Driver Trajectories
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/drivers/{driver_id}/trajectories/active:
+    get:
+      operationId: drivers_trajectories_active_retrieve
+      parameters:
+      - in: path
+        name: driver_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Driver Trajectories
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trajectory'
+          description: ''
+  /api/v1/geo/congestion:
+    get:
+      operationId: geo_congestion_retrieve
+      parameters:
+      - in: query
+        name: zone_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Geolocation
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/geo/geocode:
+    get:
+      operationId: geo_geocode_retrieve
+      parameters:
+      - in: query
+        name: address
+        schema:
+          type: string
+        required: true
+      tags:
+      - Geolocation
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/geo/reverse-geocode:
+    get:
+      operationId: geo_reverse_geocode_retrieve
+      parameters:
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: double
+        required: true
+      - in: query
+        name: lng
+        schema:
+          type: number
+          format: double
+        required: true
+      tags:
+      - Geolocation
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/geo/route:
+    get:
+      operationId: geo_route_retrieve
+      parameters:
+      - in: query
+        name: destination
+        schema:
+          type: string
+        description: lat,lng
+        required: true
+      - in: query
+        name: origin
+        schema:
+          type: string
+        description: lat,lng
+        required: true
+      tags:
+      - Geolocation
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/geo/verify-destination:
+    post:
+      operationId: geo_verify_destination_create
+      description: Used by Spring Boot during matching. Checks ST_DWithin corridor.
+      tags:
+      - Optimization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyDestination'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VerifyDestination'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VerifyDestination'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/health:
+    get:
+      operationId: health_retrieve
+      tags:
+      - System
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/optimize/demand-heatmap:
+    get:
+      operationId: optimize_demand_heatmap_retrieve
+      tags:
+      - Optimization
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/optimize/turn:
+    post:
+      operationId: optimize_turn_create
+      description: Core turn optimizer — greedy corridor matching.
+      tags:
+      - Optimization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OptimizeTurn'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OptimizeTurn'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OptimizeTurn'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/zones:
+    get:
+      operationId: zones_list
+      tags:
+      - Zones
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ZoneList'
+          description: ''
+  /api/v1/zones/{id}:
+    get:
+      operationId: zones_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Zones
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneDetail'
+          description: ''
+components:
+  schemas:
+    Carrefour:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        zone_id:
+          type: integer
+          nullable: true
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        location:
+          type: string
+          readOnly: true
+        is_pickup_point:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - location
+      - name
+      - updated_at
+      - zone_id
+    CarrefourCreate:
+      type: object
+      properties:
+        zone_id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          maxLength: 150
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+        is_pickup_point:
+          type: boolean
+          default: true
+      required:
+      - lat
+      - lng
+      - name
+    LatLng:
+      type: object
+      properties:
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+      required:
+      - lat
+      - lng
+    OptimizeTurn:
+      type: object
+      properties:
+        driver_id:
+          type: integer
+        zone_id:
+          type: integer
+      required:
+      - driver_id
+    Trajectory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        driver_id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          nullable: true
+          maxLength: 150
+        geometry:
+          type: string
+          readOnly: true
+        tolerance_meters:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - driver_id
+      - geometry
+      - id
+      - updated_at
+    TrajectoryCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/LatLng'
+        tolerance_meters:
+          type: integer
+          maximum: 5000
+          minimum: 50
+          default: 500
+      required:
+      - points
+    TrajectoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/LatLng'
+        tolerance_meters:
+          type: integer
+          maximum: 5000
+          minimum: 50
+        is_active:
+          type: boolean
+    VerifyDestination:
+      type: object
+      properties:
+        driver_id:
+          type: integer
+        destination:
+          $ref: '#/components/schemas/LatLng'
+        tolerance_meters:
+          type: integer
+          maximum: 5000
+          minimum: 50
+      required:
+      - destination
+      - driver_id
+    ZoneDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          nullable: true
+          maxLength: 255
+        boundary:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+        carrefour_count:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - boundary
+      - carrefour_count
+      - created_at
+      - id
+      - name
+      - updated_at
+    ZoneList:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          nullable: true
+          maxLength: 255
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+tags:
+- name: Geolocation
+  description: Google Maps wrapper endpoints
+- name: Zones
+  description: Yaoundé taxi zones
+- name: Carrefours
+  description: Pickup/drop reference points
+- name: Driver Trajectories
+  description: Driver work corridors (turns)
+- name: Optimization
+  description: Turn optimizer & corridor matching
+- name: Admin
+  description: Dashboard aggregation endpoints
+- name: System
+  description: Health checks
