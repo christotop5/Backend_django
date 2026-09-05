@@ -35,3 +35,13 @@ python manage.py test geolocation.tests.test_api -v 2
 ## Shared database
 
 See [`docs/VORA_Shared_Database_Guide.md`](docs/VORA_Shared_Database_Guide.md)
+
+## Deploy on Render
+
+See [`docs/DEPLOY_RENDER.md`](docs/DEPLOY_RENDER.md) for full instructions.
+
+Quick summary:
+- Uses **Docker** (GeoDjango needs GDAL/GEOS)
+- Health check: `/api/v1/health`
+- Swagger: `/api/v1/docs/`
+- Set `DATABASE_URL`, `GOOGLE_MAPS_API_KEY`, `SECRET_KEY`, `DEBUG=False` in Render env vars

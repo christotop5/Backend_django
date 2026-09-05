@@ -3,6 +3,7 @@ Django settings for VORA / OptimRoute CM backend.
 """
 
 import os
+import sys
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 
@@ -16,7 +17,15 @@ SECRET_KEY = os.environ.get(
     'django-insecure-dev-only-change-in-production',
 )
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+_render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
+_default_hosts = 'localhost,127.0.0.1,.onrender.com'
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('ALLOWED_HOSTS', _default_hosts).split(',') if h.strip()
+]
+if _render_host and _render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_host)
+
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 TRAJECTORY_TOLERANCE_METERS = int(os.environ.get('TRAJECTORY_TOLERANCE_METERS', '500'))
 SPRING_BOOT_RESERVATION_SERVICE_URL = os.environ.get('SPRING_BOOT_RESERVATION_SERVICE_URL', '')
@@ -36,10 +45,19 @@ def _database_from_url(url: str) -> dict:
 
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
-if not DATABASE_URL:
-    raise ValueError('DATABASE_URL environment variable is required.')
+_collectstatic = 'collectstatic' in sys.argv
 
-DATABASES = {'default': _database_from_url(DATABASE_URL)}
+if DATABASE_URL:
+    DATABASES = {'default': _database_from_url(DATABASE_URL)}
+elif _collectstatic:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / '.collectstatic-build.sqlite3',
+        }
+    }
+else:
+    raise ValueError('DATABASE_URL environment variable is required.')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -62,6 +80,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -103,6 +122,13 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
@@ -126,5 +152,30 @@ SPECTACULAR_SETTINGS = {
     ],
 }
 
-CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if not DEBUG else []
+_cors_origins = [o.strip() for o in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()]
+CORS_ALLOW_ALL_ORIGINS = DEBUG and not _cors_origins
+CORS_ALLOWED_ORIGINS = _cors_origins
+
+# Production security (Render terminates TLS at the edge)
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1', 'yes')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+_csrf_origins = [o.strip() for o in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
+if _render_host:
+    _csrf_origins.append(f'https://{_render_host}')
+CSRF_TRUSTED_ORIGINS = _csrf_origins
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler'},
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': os.environ.get('LOG_LEVEL', 'INFO'),
+    },
+}
