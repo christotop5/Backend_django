@@ -30,17 +30,48 @@ GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 TRAJECTORY_TOLERANCE_METERS = int(os.environ.get('TRAJECTORY_TOLERANCE_METERS', '500'))
 SPRING_BOOT_RESERVATION_SERVICE_URL = os.environ.get('SPRING_BOOT_RESERVATION_SERVICE_URL', '')
 
+_INVALID_ENV_VALUES = {'true', 'false', 'none', 'null', ''}
+
+
+def _parse_csv_env(name: str) -> list[str]:
+    raw = os.environ.get(name, '')
+    if raw.strip().lower() in _INVALID_ENV_VALUES:
+        return []
+    return [part.strip() for part in raw.split(',') if part.strip()]
+
+
+def _valid_http_origins(values: list[str]) -> list[str]:
+    """Keep only real http(s) origins — ignore booleans like 'True' from mis-set env vars."""
+    origins = []
+    for value in values:
+        lowered = value.lower()
+        if lowered in _INVALID_ENV_VALUES:
+            continue
+        if lowered.startswith(('http://', 'https://')):
+            origins.append(value.rstrip('/'))
+    return origins
+
 
 def _database_from_url(url: str) -> dict:
+    # Render internal URLs may use postgres:// — normalize for urlparse
+    if url.startswith('postgres://'):
+        url = url.replace('postgres://', 'postgresql://', 1)
+
     parsed = urlparse(url)
+    hostname = parsed.hostname or ''
+
+    # Internal Render Postgres hostnames end with "-a" (no public domain)
+    is_render_internal = hostname.endswith('-a') and '.render.com' not in hostname
+    db_options = {'sslmode': 'prefer'} if is_render_internal else {'sslmode': 'require'}
+
     return {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': parsed.path.lstrip('/'),
         'USER': unquote(parsed.username or ''),
         'PASSWORD': unquote(parsed.password or ''),
-        'HOST': parsed.hostname,
+        'HOST': hostname,
         'PORT': parsed.port or 5432,
-        'OPTIONS': {'sslmode': 'require'},
+        'OPTIONS': db_options,
     }
 
 
@@ -152,7 +183,12 @@ SPECTACULAR_SETTINGS = {
     ],
 }
 
-_cors_origins = [o.strip() for o in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()]
+_cors_origins = _valid_http_origins(_parse_csv_env('CORS_ALLOWED_ORIGINS'))
+if _render_host:
+    _render_origin = f'https://{_render_host}'
+    if _render_origin not in _cors_origins:
+        _cors_origins.append(_render_origin)
+
 CORS_ALLOW_ALL_ORIGINS = DEBUG and not _cors_origins
 CORS_ALLOWED_ORIGINS = _cors_origins
 
@@ -163,9 +199,11 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-_csrf_origins = [o.strip() for o in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
+_csrf_origins = _valid_http_origins(_parse_csv_env('CSRF_TRUSTED_ORIGINS'))
 if _render_host:
-    _csrf_origins.append(f'https://{_render_host}')
+    _render_origin = f'https://{_render_host}'
+    if _render_origin not in _csrf_origins:
+        _csrf_origins.append(_render_origin)
 CSRF_TRUSTED_ORIGINS = _csrf_origins
 
 LOGGING = {

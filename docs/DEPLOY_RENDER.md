@@ -43,13 +43,13 @@ Set in Render Dashboard → **Environment**:
 
 | Key | Value | Notes |
 |-----|-------|-------|
-| `DATABASE_URL` | `postgresql://...` | From Render Postgres → **Connections** |
+| `DATABASE_URL` | Internal URL from Render Postgres | Use **Internal** URL when web service is on Render (hostname ends with `-a`) |
 | `SECRET_KEY` | random 50+ char string | Render can auto-generate |
 | `DEBUG` | `False` | Required in production |
 | `GOOGLE_MAPS_API_KEY` | your key | Required for geo endpoints |
 | `ALLOWED_HOSTS` | `localhost,.onrender.com` | `.onrender.com` covers Render URL |
-| `CORS_ALLOWED_ORIGINS` | `https://your-frontend.vercel.app` | Comma-separated |
-| `CSRF_TRUSTED_ORIGINS` | `https://your-service.onrender.com,https://your-frontend.vercel.app` | Include Render HTTPS URL |
+| `CORS_ALLOWED_ORIGINS` | `https://your-frontend.vercel.app` | **Must be a full URL** — never `True` |
+| `CSRF_TRUSTED_ORIGINS` | `https://your-service.onrender.com,https://your-frontend.vercel.app` | **Must start with `https://`** — never `True` |
 | `TRAJECTORY_TOLERANCE_METERS` | `500` | Optional |
 | `WEB_CONCURRENCY` | `2` | Gunicorn workers |
 | `GUNICORN_TIMEOUT` | `120` | PostGIS queries can be slow |
@@ -110,7 +110,8 @@ VITE_API_GEO_URL=https://YOUR-SERVICE.onrender.com
 |-------|-----|
 | `GDAL library not found` | Use **Docker** deploy (Dockerfile installs GDAL) — native Python on Render lacks GeoDjango libs |
 | `DisallowedHost` | Add your `*.onrender.com` host to `ALLOWED_HOSTS` or rely on `RENDER_EXTERNAL_HOSTNAME` |
-| `SSL connection required` | `DATABASE_URL` must use Render Postgres with `sslmode=require` (auto-included) |
+| `CORS/CSRF origin 'True'` | Remove `CORS_ALLOWED_ORIGINS=True` from Render — use full URLs like `https://app.vercel.app` or leave empty (Render hostname is auto-added) |
+| `SSL connection required` | External DB URL needs SSL; internal `-a` hostname uses `sslmode=prefer` automatically |
 | Cold start slow (free tier) | Normal on free plan — health check wakes the service |
 | Migrations fail | Check `DATABASE_URL` is set before first deploy; run manually via Render Shell: `python manage.py migrate` |
 
