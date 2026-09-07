@@ -11,7 +11,16 @@ from accounts.exceptions import (
     ValidationFailed,
 )
 from accounts.models import Role, User, UserProfile
-from accounts.services.jwt_service import _role_slug, _user_public_id, create_access_token, create_refresh_token
+from accounts.services.jwt_service import (
+    ACCESS_TOKEN_LIFETIME,
+    REFRESH_TOKEN_LIFETIME,
+    _role_slug,
+    _user_public_id,
+    create_access_token,
+    create_refresh_token,
+    refresh_token_pair,
+    revoke_refresh_token,
+)
 from accounts.services.otp_service import OTP_TTL_SECONDS, send_otp
 from core.models import Vehicle
 
@@ -133,10 +142,24 @@ def signin(email: str, password: str) -> dict:
         vehicle = Vehicle.objects.filter(assigned_driver=user).first()
         vehicle_plate = vehicle.registration_number if vehicle else None
 
+    return _token_bundle(user, role, profile, vehicle_plate)
+
+
+def _token_bundle(user: User, role: str | None = None, profile=None, vehicle_plate=None) -> dict:
+    if role is None:
+        role = _role_slug(user)
+    if profile is None:
+        profile = getattr(user, 'profile', None)
+    if vehicle_plate is None and role == 'driver':
+        vehicle = Vehicle.objects.filter(assigned_driver=user).first()
+        vehicle_plate = vehicle.registration_number if vehicle else None
+
     return {
         'access_token': create_access_token(user),
+        'refresh_token': create_refresh_token(user),
         'token_type': 'Bearer',
-        'expires_in': 86400,
+        'expires_in': int(ACCESS_TOKEN_LIFETIME.total_seconds()),
+        'refresh_expires_in': int(REFRESH_TOKEN_LIFETIME.total_seconds()),
         'user': {
             'id': _user_public_id(user),
             'email': user.email,
@@ -147,6 +170,37 @@ def signin(email: str, password: str) -> dict:
             'redirect_dashboard': REDIRECT_MAP.get(role, 'pickup'),
         },
     }
+
+
+def refresh_session(refresh_token: str) -> dict:
+    access, new_refresh, user = refresh_token_pair(refresh_token)
+    role = _role_slug(user)
+    profile = getattr(user, 'profile', None)
+    vehicle_plate = None
+    if role == 'driver':
+        vehicle = Vehicle.objects.filter(assigned_driver=user).first()
+        vehicle_plate = vehicle.registration_number if vehicle else None
+
+    return {
+        'access_token': access,
+        'refresh_token': new_refresh,
+        'token_type': 'Bearer',
+        'expires_in': int(ACCESS_TOKEN_LIFETIME.total_seconds()),
+        'refresh_expires_in': int(REFRESH_TOKEN_LIFETIME.total_seconds()),
+        'user': {
+            'id': _user_public_id(user),
+            'email': user.email,
+            'name': f'{user.first_name} {user.last_name}'.strip(),
+            'role': role,
+            'vehicle_plate': vehicle_plate,
+            'corridor_axis': profile.corridor_axis if profile else '',
+            'redirect_dashboard': REDIRECT_MAP.get(role, 'pickup'),
+        },
+    }
+
+
+def logout(refresh_token: str) -> None:
+    revoke_refresh_token(refresh_token, reason='logout')
 
 
 def user_me(user: User) -> dict:

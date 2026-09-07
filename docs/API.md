@@ -66,22 +66,28 @@ curl -X POST http://localhost:8000/api/v1/auth/signin \
 
 ---
 
-## Auth (simulation — OTP toujours `1234`)
+## Auth (JWT — access 24 h + refresh 7 j)
+
+> **Guide frontend complet :** [`docs/FRONTEND_AUTH.md`](./FRONTEND_AUTH.md)
 
 | Method | Endpoint | Auth |
 |--------|----------|------|
-| POST | `/auth/signup` | Non |
-| POST | `/auth/otp/send` | Non |
-| POST | `/auth/otp/verify` | Non — utilise **`1234`** |
-| POST | `/auth/signin` | Non |
-| GET | `/auth/me` | Bearer JWT |
+| POST | `/auth/signup` | — |
+| POST | `/auth/otp/send` | — |
+| POST | `/auth/otp/verify` | — → `access_token` + `refresh_token` |
+| POST | `/auth/signin` | — → `access_token` + `refresh_token` |
+| POST | `/auth/refresh` | — body `{ "refresh_token": "..." }` → nouveaux tokens (rotation) |
+| POST | `/auth/logout` | — body `{ "refresh_token": "..." }` → révoque refresh |
+| GET | `/auth/me` | Bearer access token |
 
 ### Flow frontend
 
 1. `POST /auth/signup` avec `role`: `passenger` ou `driver`
 2. `POST /auth/otp/verify` avec `{ "email": "...", "otp": "1234" }`
-3. `POST /auth/signin` ou utiliser le `access_token` de l'étape 2
-4. Header: `Authorization: Bearer <access_token>`
+3. Stocker `access_token` (24 h) + `refresh_token` (7 j)
+4. Header API : `Authorization: Bearer <access_token>`
+5. Sur 401 ou avant expiration : `POST /auth/refresh` — **remplacer les deux tokens**
+6. Déconnexion : `POST /auth/logout` + effacer tokens côté client
 
 ---
 

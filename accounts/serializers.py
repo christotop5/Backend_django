@@ -45,9 +45,19 @@ class AuthUserSerializer(serializers.Serializer):
 
 class SigninDataSerializer(serializers.Serializer):
     access_token = serializers.CharField()
+    refresh_token = serializers.CharField()
     token_type = serializers.CharField(default='Bearer')
-    expires_in = serializers.IntegerField(help_text='Durée de validité en secondes (86400 = 24 h)')
+    expires_in = serializers.IntegerField(help_text='Access token TTL en secondes (86400 = 24 h)')
+    refresh_expires_in = serializers.IntegerField(help_text='Refresh token TTL en secondes (604800 = 7 j)')
     user = AuthUserSerializer()
+
+
+class RefreshTokenSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField()
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField()
 
 
 class SigninResponseSerializer(serializers.Serializer):
@@ -75,6 +85,9 @@ class SignupResponseSerializer(serializers.Serializer):
 class OTPVerifyDataSerializer(serializers.Serializer):
     access_token = serializers.CharField()
     refresh_token = serializers.CharField()
+    token_type = serializers.CharField(default='Bearer')
+    expires_in = serializers.IntegerField()
+    refresh_expires_in = serializers.IntegerField()
     user = AuthUserSerializer()
 
 

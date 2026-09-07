@@ -5,17 +5,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.serializers import (
+    LogoutSerializer,
     MeResponseSerializer,
     OTPSendSerializer,
     OTPVerifyResponseSerializer,
     OTPVerifySerializer,
+    RefreshTokenSerializer,
     SigninResponseSerializer,
     SigninSerializer,
     SignupResponseSerializer,
     SignupSerializer,
 )
-from accounts.services.auth_service import auth_user_payload, signin, signup, user_me
-from accounts.services.jwt_service import create_access_token, create_refresh_token
+from accounts.services.auth_service import auth_user_payload, logout, refresh_session, signin, signup, user_me
 from accounts.services.otp_service import send_otp, verify_otp
 
 
@@ -115,14 +116,14 @@ class OTPVerifyView(APIView):
         ser = OTPVerifySerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         user = verify_otp(ser.validated_data['email'], ser.validated_data['otp'])
+        from accounts.services.auth_service import _token_bundle
+
+        bundle = _token_bundle(user)
+        bundle['user'] = auth_user_payload(user)
         return Response({
             'success': True,
             'message': 'Vérification réussie. Votre compte est activé.',
-            'data': {
-                'access_token': create_access_token(user),
-                'refresh_token': create_refresh_token(user),
-                'user': auth_user_payload(user),
-            },
+            'data': bundle,
         })
 
 
@@ -159,6 +160,49 @@ class SigninView(APIView):
             'success': True,
             'message': 'Connexion réussie.',
             'data': data,
+        })
+
+
+class RefreshView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=RefreshTokenSerializer,
+        responses={200: SigninResponseSerializer},
+        tags=['Auth'],
+        summary='Renouveler access token',
+        description=(
+            'Échange un refresh token valide contre un nouveau couple access + refresh (rotation). '
+            'L\'ancien refresh token est révoqué — toujours stocker le nouveau.'
+        ),
+    )
+    def post(self, request):
+        ser = RefreshTokenSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        data = refresh_session(ser.validated_data['refresh_token'])
+        return Response({
+            'success': True,
+            'message': 'Session renouvelée.',
+            'data': data,
+        })
+
+
+class LogoutView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=LogoutSerializer,
+        tags=['Auth'],
+        summary='Déconnexion',
+        description='Révoque le refresh token. Le access token reste valide jusqu\'à expiration (24 h max).',
+    )
+    def post(self, request):
+        ser = LogoutSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        logout(ser.validated_data['refresh_token'])
+        return Response({
+            'success': True,
+            'message': 'Déconnexion réussie.',
         })
 
 

@@ -21,40 +21,42 @@ info:
     | Dashboard ops | `/admin/*` |\n\nAprès connexion, utiliser `user.redirect_dashboard`
     : `pickup` ou `driver-cockpit`.\n\n---\n\n## Authentification\n\n1. **Inscription**
     — `POST /auth/signup` (`role`: `passenger` \\| `driver`)\n2. **OTP** — `POST /auth/otp/verify`
-    avec code **`1234`** (simulation, pas d'email réel)\n3. **Connexion** — `POST
-    /auth/signin` → `access_token` JWT (24 h)\n4. **Requêtes protégées** — header
-    `Authorization: Bearer <access_token>`\n5. **Profil** — `GET /auth/me`\n\nCliquez
-    **Authorize** en haut à droite et entrez : `Bearer eyJ...`\n\n---\n\n## Données
-    de test (seed)\n\nCommande : `python manage.py seed_vora`\n\n| Entité | Quantité
-    | Villes |\n|--------|----------|--------|\n| Passagers | 50 | Yaoundé & Douala
-    |\n| Chauffeurs (taximen jaunes) | 10 | Yaoundé & Douala |\n| Carrefours | 32
-    | GPS réels |\n| Lignes / corridors | 6 | Y1–Y3, D1–D3 |\n\n**Mot de passe (tous
-    les comptes seed) :** `pass12345`\n\n| Rôle | Email exemple |\n|------|---------------|\n|
-    Passager | `marie.ebanda@gmail.com` |\n| Chauffeur | `alain.mvondo@vora.cm` |\n\n---\n\n##
-    Parcours passager (flow)\n\n```\nGET /carrefours?city=Yaoundé\n    ↓\nPOST /rides/estimate
-    \ { pickup_carrefour_id, destination_carrefour_id, ride_type }\n    ↓\nPOST /rides/request
-    \  { payment_method: cash|momo|om|wallet }\n    ↓\nGET  /rides/{ride_id}/status
-    \  (polling statut + chauffeur simulé)\n    ↓\nPOST /rides/{ride_id}/payment  (si
-    paiement à l'arrivée)\n    ↓\nPOST /rides/{ride_id}/rate     (note + pourboire
-    simulé)\n```\n\n---\n\n## Parcours chauffeur (flow)\n\n```\nPOST /driver/status
-    \     { is_online, current_location }\n    ↓\nPOST /driver/corridor    { corridor_id:
-    \"Y1\", direction: aller|retour }\n    ↓\nPATCH /driver/cabin-seats/{seat_id}
-    \  (occupation sièges, tarif rotation)\n    ↓\nPOST /driver/withdraw    (retrait
-    Mobile Money simulé)\n```\n\nCorridor IDs : `Y1`, `Y2`, `Y3` (Yaoundé), `D1`,
-    `D2`, `D3` (Douala) — voir `GET /corridors`.\n\n---\n\n## Paiements (simulation)\n\n>
-    **Aucun FCFA réel n'est débité.** Toutes les réponses incluent `\"simulation\":
-    true`.\n\n| Méthode | Endpoint |\n|---------|----------|\n| MTN MoMo | `POST /payments/mtn-momo`
-    |\n| Orange Money | `POST /payments/orange-money` |\n| Espèces | `POST /payments/cash/confirm`
-    |\n| Statut | `GET /payments/{transaction_id}/status` |\n\n---\n\n## Géolocalisation
-    & optimisation\n\n| Endpoint | Usage |\n|----------|-------|\n| `GET /geo/geocode`
-    | Adresse → coordonnées |\n| `GET /geo/route` | Itinéraire Google Maps |\n| `GET
-    /zones`, `/carrefours`, `/corridors` | Données de référence |\n| `GET /drivers/online`
-    | Chauffeurs disponibles (public) |\n| `POST /geo/verify-destination` | Vérifier
-    si destination ∈ corridor chauffeur (PostGIS) |\n| `POST /optimize/turn` | Optimisation
-    greedy tournée (jusqu'à 4 passagers) |\n\n---\n\n## Format des réponses\n\nSuccès
-    :\n```json\n{ \"success\": true, \"message\": \"...\", \"data\": { ... } }\n```\n\nErreur
-    :\n```json\n{\n  \"success\": false,\n  \"error\": { \"code\": \"INVALID_CREDENTIALS\",
-    \"message\": \"...\" },\n  \"timestamp\": \"2026-09-07T00:00:00Z\"\n}\n```\n\n---\n\n##
+    avec code **`1234`** (simulation)\n3. **Connexion** — `POST /auth/signin` → `access_token`
+    (24 h) + `refresh_token` (7 j)\n4. **Renouvellement** — `POST /auth/refresh` →
+    nouveaux tokens (rotation — remplacer les deux)\n5. **Déconnexion** — `POST /auth/logout`
+    → révoque le refresh token\n6. **Requêtes protégées** — header `Authorization:
+    Bearer <access_token>`\n7. **Profil** — `GET /auth/me`\n\nGuide frontend détaillé
+    : `docs/FRONTEND_AUTH.md`\n\nCliquez **Authorize** en haut à droite et entrez
+    : `Bearer eyJ...`\n\n---\n\n## Données de test (seed)\n\nCommande : `python manage.py
+    seed_vora`\n\n| Entité | Quantité | Villes |\n|--------|----------|--------|\n|
+    Passagers | 50 | Yaoundé & Douala |\n| Chauffeurs (taximen jaunes) | 10 | Yaoundé
+    & Douala |\n| Carrefours | 32 | GPS réels |\n| Lignes / corridors | 6 | Y1–Y3,
+    D1–D3 |\n\n**Mot de passe (tous les comptes seed) :** `pass12345`\n\n| Rôle |
+    Email exemple |\n|------|---------------|\n| Passager | `marie.ebanda@gmail.com`
+    |\n| Chauffeur | `alain.mvondo@vora.cm` |\n\n---\n\n## Parcours passager (flow)\n\n```\nGET
+    /carrefours?city=Yaoundé\n    ↓\nPOST /rides/estimate  { pickup_carrefour_id,
+    destination_carrefour_id, ride_type }\n    ↓\nPOST /rides/request   { payment_method:
+    cash|momo|om|wallet }\n    ↓\nGET  /rides/{ride_id}/status   (polling statut +
+    chauffeur simulé)\n    ↓\nPOST /rides/{ride_id}/payment  (si paiement à l'arrivée)\n
+    \   ↓\nPOST /rides/{ride_id}/rate     (note + pourboire simulé)\n```\n\n---\n\n##
+    Parcours chauffeur (flow)\n\n```\nPOST /driver/status      { is_online, current_location
+    }\n    ↓\nPOST /driver/corridor    { corridor_id: \"Y1\", direction: aller|retour
+    }\n    ↓\nPATCH /driver/cabin-seats/{seat_id}   (occupation sièges, tarif rotation)\n
+    \   ↓\nPOST /driver/withdraw    (retrait Mobile Money simulé)\n```\n\nCorridor
+    IDs : `Y1`, `Y2`, `Y3` (Yaoundé), `D1`, `D2`, `D3` (Douala) — voir `GET /corridors`.\n\n---\n\n##
+    Paiements (simulation)\n\n> **Aucun FCFA réel n'est débité.** Toutes les réponses
+    incluent `\"simulation\": true`.\n\n| Méthode | Endpoint |\n|---------|----------|\n|
+    MTN MoMo | `POST /payments/mtn-momo` |\n| Orange Money | `POST /payments/orange-money`
+    |\n| Espèces | `POST /payments/cash/confirm` |\n| Statut | `GET /payments/{transaction_id}/status`
+    |\n\n---\n\n## Géolocalisation & optimisation\n\n| Endpoint | Usage |\n|----------|-------|\n|
+    `GET /geo/geocode` | Adresse → coordonnées |\n| `GET /geo/route` | Itinéraire
+    Google Maps |\n| `GET /zones`, `/carrefours`, `/corridors` | Données de référence
+    |\n| `GET /drivers/online` | Chauffeurs disponibles (public) |\n| `POST /geo/verify-destination`
+    | Vérifier si destination ∈ corridor chauffeur (PostGIS) |\n| `POST /optimize/turn`
+    | Optimisation greedy tournée (jusqu'à 4 passagers) |\n\n---\n\n## Format des
+    réponses\n\nSuccès :\n```json\n{ \"success\": true, \"message\": \"...\", \"data\":
+    { ... } }\n```\n\nErreur :\n```json\n{\n  \"success\": false,\n  \"error\": {
+    \"code\": \"INVALID_CREDENTIALS\", \"message\": \"...\" },\n  \"timestamp\": \"2026-09-07T00:00:00Z\"\n}\n```\n\n---\n\n##
     Codes d'erreur courants\n\n| Code | HTTP | Signification |\n|------|------|---------------|\n|
     `INVALID_CREDENTIALS` | 401 | Email ou mot de passe incorrect |\n| `ACCOUNT_NOT_VERIFIED`
     | 403 | OTP non validé |\n| `VALIDATION_FAILED` | 400 | Champs invalides |\n|
@@ -116,6 +118,32 @@ paths:
                 items:
                   $ref: '#/components/schemas/ZoneDetail'
           description: ''
+  /api/v1/auth/logout:
+    post:
+      operationId: auth_logout_create
+      description: Révoque le refresh token. Le access token reste valide jusqu'à
+        expiration (24 h max).
+      summary: Déconnexion
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+        required: true
+      security:
+      - BearerAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/v1/auth/me:
     get:
       operationId: auth_me_retrieve
@@ -194,6 +222,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OTPVerifyResponse'
+          description: ''
+  /api/v1/auth/refresh:
+    post:
+      operationId: auth_refresh_create
+      description: Échange un refresh token valide contre un nouveau couple access
+        + refresh (rotation). L'ancien refresh token est révoqué — toujours stocker
+        le nouveau.
+      summary: Renouveler access token
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+        required: true
+      security:
+      - BearerAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SigninResponse'
           description: ''
   /api/v1/auth/signin:
     post:
@@ -1402,6 +1461,14 @@ components:
       required:
       - lat
       - lng
+    LogoutRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+          minLength: 1
+      required:
+      - refresh_token
     MeResponse:
       type: object
       properties:
@@ -1452,10 +1519,19 @@ components:
           type: string
         refresh_token:
           type: string
+        token_type:
+          type: string
+          default: Bearer
+        expires_in:
+          type: integer
+        refresh_expires_in:
+          type: integer
         user:
           $ref: '#/components/schemas/AuthUser'
       required:
       - access_token
+      - expires_in
+      - refresh_expires_in
       - refresh_token
       - user
     OTPVerifyRequest:
@@ -1619,6 +1695,14 @@ components:
       description: |-
         * `pickup` - pickup
         * `driver-cockpit` - driver-cockpit
+    RefreshTokenRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+          minLength: 1
+      required:
+      - refresh_token
     RideEstimateRequest:
       type: object
       properties:
@@ -1747,17 +1831,24 @@ components:
       properties:
         access_token:
           type: string
+        refresh_token:
+          type: string
         token_type:
           type: string
           default: Bearer
         expires_in:
           type: integer
-          description: Durée de validité en secondes (86400 = 24 h)
+          description: Access token TTL en secondes (86400 = 24 h)
+        refresh_expires_in:
+          type: integer
+          description: Refresh token TTL en secondes (604800 = 7 j)
         user:
           $ref: '#/components/schemas/AuthUser'
       required:
       - access_token
       - expires_in
+      - refresh_expires_in
+      - refresh_token
       - user
     SigninRequest:
       type: object

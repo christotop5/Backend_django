@@ -44,6 +44,11 @@ class InvalidCredentials(VoraAPIException):
     status_code = status.HTTP_401_UNAUTHORIZED
 
 
+class InvalidRefreshToken(VoraAPIException):
+    code = 'INVALID_REFRESH_TOKEN'
+    status_code = status.HTTP_401_UNAUTHORIZED
+
+
 class AccountNotVerified(VoraAPIException):
     code = 'ACCOUNT_NOT_VERIFIED'
     status_code = status.HTTP_403_FORBIDDEN

@@ -39,10 +39,14 @@ Après connexion, utiliser `user.redirect_dashboard` : `pickup` ou `driver-cockp
 ## Authentification
 
 1. **Inscription** — `POST /auth/signup` (`role`: `passenger` \| `driver`)
-2. **OTP** — `POST /auth/otp/verify` avec code **`1234`** (simulation, pas d'email réel)
-3. **Connexion** — `POST /auth/signin` → `access_token` JWT (24 h)
-4. **Requêtes protégées** — header `Authorization: Bearer <access_token>`
-5. **Profil** — `GET /auth/me`
+2. **OTP** — `POST /auth/otp/verify` avec code **`1234`** (simulation)
+3. **Connexion** — `POST /auth/signin` → `access_token` (24 h) + `refresh_token` (7 j)
+4. **Renouvellement** — `POST /auth/refresh` → nouveaux tokens (rotation — remplacer les deux)
+5. **Déconnexion** — `POST /auth/logout` → révoque le refresh token
+6. **Requêtes protégées** — header `Authorization: Bearer <access_token>`
+7. **Profil** — `GET /auth/me`
+
+Guide frontend détaillé : `docs/FRONTEND_AUTH.md`
 
 Cliquez **Authorize** en haut à droite et entrez : `Bearer eyJ...`
 
