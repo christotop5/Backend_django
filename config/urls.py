@@ -22,4 +22,5 @@ urlpatterns = [
     path('api/v1/', include('operations.urls')),
     path('api/v1/', include('geolocation.urls')),
     path('api/v1/', include('optimization.urls')),
+    path('api/v1/', include('ai.urls')),
 ]

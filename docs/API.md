@@ -109,6 +109,22 @@ curl -X POST http://localhost:8000/api/v1/auth/signin \
 
 ---
 
+## AI (OpenRouter LLM)
+
+> **Guide frontend :** [`docs/FRONTEND_AI.md`](./FRONTEND_AI.md)
+
+Env: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (ex. `openai/gpt-4o-mini`)
+
+| Method | Endpoint | Auth | Feature |
+|--------|----------|------|---------|
+| POST | `/ai/parse-ride` | Bearer | Langage naturel → course + estimate |
+| POST | `/ai/chat` | Optional | VORA Guide chatbot |
+| POST | `/ai/resolve-destination` | — | Surnom lieu → carrefour |
+| POST | `/ai/driver-briefing` | Bearer (driver) | Briefing corridor |
+| POST | `/ai/classify-sos` | Bearer | Classification SOS |
+
+---
+
 ## Payments (simulation — no real money)
 
 | Method | Endpoint | Notes |

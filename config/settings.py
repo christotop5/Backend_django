@@ -30,6 +30,11 @@ if _render_host and _render_host not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(_render_host)
 
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
+OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
+OPENROUTER_MODEL = os.environ.get('OPENROUTER_MODEL') or os.environ.get('MODEL', 'openai/gpt-4o-mini')
+OPENROUTER_BASE_URL = os.environ.get('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')
+OPENROUTER_HTTP_REFERER = os.environ.get('OPENROUTER_HTTP_REFERER', 'https://vora.cm')
+OPENROUTER_TIMEOUT_SECONDS = int(os.environ.get('OPENROUTER_TIMEOUT_SECONDS', '45'))
 TRAJECTORY_TOLERANCE_METERS = int(os.environ.get('TRAJECTORY_TOLERANCE_METERS', '500'))
 SPRING_BOOT_RESERVATION_SERVICE_URL = os.environ.get('SPRING_BOOT_RESERVATION_SERVICE_URL', '')
 
@@ -111,6 +116,7 @@ INSTALLED_APPS = [
     'optimization',
     'operations',
     'rides',
+    'ai',
 ]
 
 MIDDLEWARE = [

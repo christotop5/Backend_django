@@ -160,6 +160,20 @@ Erreur :
 | `RIDE_CONFLICT` | 409 | Course déjà en cours |
 | `INSUFFICIENT_FUNDS` | 402 | Solde portefeuille insuffisant |
 | `NOT_FOUND` | 404 | Ressource introuvable |
+
+---
+
+## Assistant IA (OpenRouter)
+
+| Endpoint | Description |
+|----------|-------------|
+| `POST /ai/parse-ride` | Demande NL → carrefours + payload `/rides/request` |
+| `POST /ai/chat` | VORA Guide chatbot |
+| `POST /ai/resolve-destination` | Surnoms locaux → carrefour |
+| `POST /ai/driver-briefing` | Briefing chauffeur |
+| `POST /ai/classify-sos` | Classification alerte SOS |
+
+Variables: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`. Guide frontend: `docs/FRONTEND_AI.md`.
 """
 
 OPENAPI_TAGS = [
@@ -240,6 +254,13 @@ OPENAPI_TAGS = [
     {
         'name': 'Admin',
         'description': 'Agrégations dashboard : zones, signalements, statistiques journalières.',
+    },
+    {
+        'name': 'AI',
+        'description': (
+            'Assistant VORA (OpenRouter) : parse course NL, chatbot guide, résolution lieux, '
+            'briefing chauffeur, classification SOS. Requiert OPENROUTER_API_KEY.'
+        ),
     },
 ]
 
