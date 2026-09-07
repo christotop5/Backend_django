@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -61,7 +61,24 @@ def _process_ride_payment(user, ride: Ride) -> dict | None:
 class RideEstimateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(request=RideEstimateSerializer, tags=['Rides'])
+    @extend_schema(
+        request=RideEstimateSerializer,
+        tags=['Rides'],
+        summary='Estimer le tarif d\'une course',
+        description='Calcule tarif partagé ou direct entre deux carrefours seedés (`GET /carrefours`).',
+        examples=[
+            OpenApiExample(
+                'Poste Centrale → Bastos (partagé)',
+                value={
+                    'pickup_carrefour_id': 1,
+                    'destination_carrefour_id': 2,
+                    'ride_type': 'shared',
+                    'seats_requested': 1,
+                },
+                request_only=True,
+            ),
+        ],
+    )
     def post(self, request):
         ser = RideEstimateSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
@@ -72,7 +89,15 @@ class RideEstimateView(APIView):
 class RideRequestView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(request=RideRequestSerializer, tags=['Rides'])
+    @extend_schema(
+        request=RideRequestSerializer,
+        tags=['Rides'],
+        summary='Demander une course',
+        description=(
+            'Crée une course et simule le matching taxi jaune. '
+            'Paiement momo/om/wallet déclenché immédiatement ; espèces à l\'arrivée.'
+        ),
+    )
     def post(self, request):
         from accounts.exceptions import RideConflict
 
@@ -114,7 +139,11 @@ class RideRequestView(APIView):
 class RideStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(tags=['Rides'])
+    @extend_schema(
+        tags=['Rides'],
+        summary='Statut course & infos chauffeur',
+        description='Polling du statut. Retourne un chauffeur simulé avec position et ETA.',
+    )
     def get(self, request, ride_id):
         ride = Ride.objects.filter(ride_id=ride_id, passenger=request.user).first()
         if ride is None:
@@ -146,7 +175,11 @@ class RidePayView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(tags=['Rides', 'Payments'])
+    @extend_schema(
+        tags=['Rides', 'Payments'],
+        summary='Payer la course à l\'arrivée',
+        description='Simulation — déclenche le paiement selon la méthode enregistrée sur la course.',
+    )
     def post(self, request, ride_id):
         ride = Ride.objects.filter(ride_id=ride_id, passenger=request.user).first()
         if ride is None:
@@ -162,7 +195,12 @@ class RidePayView(APIView):
 class RideRateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(request=RideRateSerializer, tags=['Rides'])
+    @extend_schema(
+        request=RideRateSerializer,
+        tags=['Rides'],
+        summary='Noter le chauffeur et laisser un pourboire',
+        description='Clôture la course, enregistre la note et simule le transfert du pourboire.',
+    )
     def post(self, request, ride_id):
         ride = Ride.objects.filter(ride_id=ride_id, passenger=request.user).first()
         if ride is None:

@@ -1,7 +1,7 @@
 import secrets
 
 from django.db.models import Q
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -42,7 +42,22 @@ def _resolve_corridor(corridor_id: str) -> CorridorLine | None:
 class DriverStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(request=DriverStatusSerializer, tags=['Driver'])
+    @extend_schema(
+        request=DriverStatusSerializer,
+        tags=['Driver'],
+        summary='Mettre le chauffeur en ligne / hors ligne',
+        description=(
+            'Met à jour le statut en ligne et la position GPS du chauffeur. '
+            'Retourne le corridor actif et le nombre de sièges libres.'
+        ),
+        examples=[
+            OpenApiExample(
+                'En ligne — Yaoundé Poste Centrale',
+                value={'is_online': True, 'current_location': {'lat': 3.8667, 'lng': 11.5167}},
+                request_only=True,
+            ),
+        ],
+    )
     def post(self, request):
         ser = DriverStatusSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
@@ -66,7 +81,22 @@ class DriverStatusView(APIView):
 class DriverCorridorView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(request=DriverCorridorSerializer, tags=['Driver'])
+    @extend_schema(
+        request=DriverCorridorSerializer,
+        tags=['Driver'],
+        summary='Sélectionner un corridor de rotation',
+        description=(
+            'Associe le chauffeur à une ligne urbaine seedée (`Y1`, `D1`, etc.). '
+            'Retourne le nombre de passagers en attente estimé sur les arrêts du corridor.'
+        ),
+        examples=[
+            OpenApiExample(
+                'Ligne Bastos — Poste (Yaoundé)',
+                value={'corridor_id': 'Y1', 'direction': 'aller'},
+                request_only=True,
+            ),
+        ],
+    )
     def post(self, request):
         ser = DriverCorridorSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
@@ -102,7 +132,12 @@ class DriverCorridorView(APIView):
 class DriverCabinSeatView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(request=CabinSeatSerializer, tags=['Driver'])
+    @extend_schema(
+        request=CabinSeatSerializer,
+        tags=['Driver'],
+        summary='Mettre à jour un siège habitacle',
+        description='Gère occupation, type passager (app / rue), tarif et statut paiement pour un des 4 sièges.',
+    )
     def patch(self, request, seat_id):
         ser = CabinSeatSerializer(data=request.data, partial=True)
         ser.is_valid(raise_exception=True)
@@ -132,7 +167,12 @@ class DriverCabinSeatView(APIView):
 class DriverWithdrawView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(request=DriverWithdrawSerializer, tags=['Driver'])
+    @extend_schema(
+        request=DriverWithdrawSerializer,
+        tags=['Driver'],
+        summary='Retrait Mobile Money simulé',
+        description='Débite le portefeuille chauffeur et simule un virement MTN/Orange — aucun argent réel.',
+    )
     def post(self, request):
         ser = DriverWithdrawSerializer(data=request.data)
         ser.is_valid(raise_exception=True)

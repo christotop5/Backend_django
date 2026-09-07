@@ -7,7 +7,10 @@ Interactive API documentation is auto-generated from the Django REST Framework v
 | Resource | URL |
 |----------|-----|
 | **Swagger UI** | [`http://localhost:8000/api/v1/docs/`](http://localhost:8000/api/v1/docs/) |
-| **OpenAPI JSON schema** | [`http://localhost:8000/api/v1/schema/`](http://localhost:8000/api/v1/schema/) |
+| **Production Swagger** | [`https://vora-ujbv.onrender.com/api/v1/docs/`](https://vora-ujbv.onrender.com/api/v1/docs/) |
+| **OpenAPI schema** | [`/api/v1/schema/`](http://localhost:8000/api/v1/schema/) |
+
+La page Swagger décrit **l'ensemble du système VORA** : architecture, rôles, flows passager/chauffeur, seed data, auth JWT (bouton **Authorize**), et tous les endpoints tagués par domaine.
 
 Start the server:
 

@@ -1,6 +1,9 @@
-"""
-Django settings for VORA / OptimRoute CM backend.
-"""
+from config.openapi import (
+    OPENAPI_DESCRIPTION,
+    OPENAPI_EXTERNAL_DOCS,
+    OPENAPI_SERVERS,
+    OPENAPI_TAGS,
+)
 
 import os
 import sys
@@ -173,25 +176,33 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'VORA Django Geo & Optimization API',
-    'DESCRIPTION': 'Geolocation, zones, driver trajectories, turn optimization — OptimRoute CM',
+    'TITLE': 'VORA Platform API',
+    'DESCRIPTION': OPENAPI_DESCRIPTION,
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    'TAGS': [
-        {'name': 'Auth', 'description': 'Inscription, OTP, connexion JWT'},
-        {'name': 'Rides', 'description': 'Parcours passager — courses & tarifs'},
-        {'name': 'Driver', 'description': 'Parcours chauffeur — habitacle & retraits'},
-        {'name': 'Payments', 'description': 'Mobile Money & espèces — simulation (aucun argent réel)'},
-        {'name': 'Safety', 'description': 'SOS & alertes'},
-        {'name': 'Geolocation', 'description': 'Google Maps wrapper endpoints'},
-        {'name': 'Zones', 'description': 'Yaoundé taxi zones'},
-        {'name': 'Carrefours', 'description': 'Pickup/drop reference points (32 seeded in Yaoundé & Douala)'},
-        {'name': 'Corridors', 'description': 'Urban taxi corridor lines (Y1–Y3, D1–D3)'},
-        {'name': 'Driver Trajectories', 'description': 'Driver work corridors (turns)'},
-        {'name': 'Optimization', 'description': 'Turn optimizer & corridor matching'},
-        {'name': 'Admin', 'description': 'Dashboard aggregation endpoints'},
-        {'name': 'System', 'description': 'Health checks'},
-    ],
+    'SERVERS': OPENAPI_SERVERS,
+    'EXTERNAL_DOCS': OPENAPI_EXTERNAL_DOCS,
+    'TAGS': OPENAPI_TAGS,
+    'CONTACT': {
+        'name': 'VORA Engineering',
+        'email': 'dev@vora.cm',
+    },
+    'LICENSE': {
+        'name': 'Proprietary',
+    },
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'displayOperationId': False,
+        'displayRequestDuration': True,
+        'filter': True,
+        'persistAuthorization': True,
+        'docExpansion': 'list',
+        'tagsSorter': 'alpha',
+        'operationsSorter': 'alpha',
+    },
+    'SWAGGER_UI_OAUTH2_CONFIG': {},
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/v1',
 }
 
 _cors_origins = _valid_http_origins(_parse_csv_env('CORS_ALLOWED_ORIGINS'))

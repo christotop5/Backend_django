@@ -23,7 +23,8 @@ class MTNMomoPaymentView(APIView):
     @extend_schema(
         request=MobilePaymentSerializer,
         tags=['Payments'],
-        description='Simulation MTN MoMo — aucun débit réel.',
+        summary='Paiement MTN MoMo simulé',
+        description='Aucun débit réel. Retourne `simulation: true` et un `transaction_id` de test.',
     )
     def post(self, request):
         ser = MobilePaymentSerializer(data=request.data)
@@ -46,7 +47,8 @@ class OrangeMoneyPaymentView(APIView):
     @extend_schema(
         request=MobilePaymentSerializer,
         tags=['Payments'],
-        description='Simulation Orange Money — aucun débit réel.',
+        summary='Paiement Orange Money simulé',
+        description='Aucun débit réel. Retourne `simulation: true` et un `transaction_id` de test.',
     )
     def post(self, request):
         ser = MobilePaymentSerializer(data=request.data)
@@ -69,7 +71,8 @@ class CashConfirmView(APIView):
     @extend_schema(
         request=CashConfirmSerializer,
         tags=['Payments'],
-        description='Confirme un paiement espèces (simulation — chauffeur).',
+        summary='Confirmer paiement espèces',
+        description='Enregistre un paiement cash simulé (chauffeur ou passager).',
     )
     def post(self, request):
         ser = CashConfirmSerializer(data=request.data)
@@ -85,7 +88,11 @@ class CashConfirmView(APIView):
 class PaymentStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(tags=['Payments'])
+    @extend_schema(
+        tags=['Payments'],
+        summary='Statut d\'une transaction',
+        description='Interroge l\'état d\'un paiement simulé par `transaction_id`.',
+    )
     def get(self, request, transaction_id):
         tx = get_payment_status(transaction_id, user=request.user)
         return Response({'success': True, 'data': payment_to_dict(tx)})

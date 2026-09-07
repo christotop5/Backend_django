@@ -14,6 +14,8 @@ class CorridorListView(APIView):
         parameters=[OpenApiParameter('city', str, OpenApiParameter.QUERY, required=False)],
         responses={200: CorridorListResponseSerializer},
         tags=['Corridors'],
+        summary='Lister les lignes / corridors taxi',
+        description='6 lignes seedées (Y1–Y3 Yaoundé, D1–D3 Douala). Filtrer par ville avec `?city=`.',
     )
     def get(self, request):
         qs = CorridorLine.objects.filter(is_active=True).order_by('city', 'name')

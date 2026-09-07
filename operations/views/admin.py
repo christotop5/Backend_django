@@ -8,7 +8,12 @@ from operations.models import Signalement, StatistiqueJournaliere
 
 
 class HealthView(APIView):
-    @extend_schema(tags=['System'], responses={200: dict})
+    @extend_schema(
+        tags=['System'],
+        summary='Health check',
+        description='Vérifie que le service Django geo/optimization répond.',
+        responses={200: dict},
+    )
     def get(self, request):
         return Response({'status': 'ok', 'service': 'vora-django-geo'})
 

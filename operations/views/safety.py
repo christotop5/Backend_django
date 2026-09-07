@@ -18,7 +18,15 @@ class SOSSerializer(serializers.Serializer):
 class SOSView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(request=SOSSerializer, tags=['Safety'])
+    @extend_schema(
+        request=SOSSerializer,
+        tags=['Safety'],
+        summary='Déclencher une alerte SOS',
+        description=(
+            'Enregistre la position GPS et crée un signalement urgent. '
+            'Notification simulée vers services de secours (117 / 113) et patrouilles VORA.'
+        ),
+    )
     def post(self, request):
         ser = SOSSerializer(data=request.data)
         ser.is_valid(raise_exception=True)

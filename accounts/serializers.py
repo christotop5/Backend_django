@@ -27,3 +27,76 @@ class OTPVerifySerializer(serializers.Serializer):
 class SigninSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+
+
+class AuthUserSerializer(serializers.Serializer):
+    id = serializers.CharField(help_text='Identifiant public, ex. usr_42')
+    email = serializers.EmailField()
+    name = serializers.CharField()
+    role = serializers.ChoiceField(choices=['passenger', 'driver'])
+    vehicle_plate = serializers.CharField(required=False, allow_null=True)
+    corridor_axis = serializers.CharField(required=False, allow_blank=True)
+    redirect_dashboard = serializers.ChoiceField(
+        choices=['pickup', 'driver-cockpit'],
+        help_text='Route frontend après connexion',
+    )
+    is_verified = serializers.BooleanField(required=False)
+
+
+class SigninDataSerializer(serializers.Serializer):
+    access_token = serializers.CharField()
+    token_type = serializers.CharField(default='Bearer')
+    expires_in = serializers.IntegerField(help_text='Durée de validité en secondes (86400 = 24 h)')
+    user = AuthUserSerializer()
+
+
+class SigninResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+    data = SigninDataSerializer()
+
+
+class SignupDataSerializer(serializers.Serializer):
+    user_id = serializers.CharField()
+    email = serializers.EmailField()
+    name = serializers.CharField()
+    role = serializers.ChoiceField(choices=['passenger', 'driver'])
+    is_verified = serializers.BooleanField()
+    otp_sent = serializers.BooleanField()
+    otp_expires_in_seconds = serializers.IntegerField()
+
+
+class SignupResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+    data = SignupDataSerializer()
+
+
+class OTPVerifyDataSerializer(serializers.Serializer):
+    access_token = serializers.CharField()
+    refresh_token = serializers.CharField()
+    user = AuthUserSerializer()
+
+
+class OTPVerifyResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+    data = OTPVerifyDataSerializer()
+
+
+class UserMeSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    email = serializers.EmailField()
+    name = serializers.CharField()
+    role = serializers.ChoiceField(choices=['passenger', 'driver'])
+    phone = serializers.CharField()
+    vehicle_plate = serializers.CharField(required=False, allow_null=True)
+    corridor_axis = serializers.CharField()
+    rating = serializers.FloatField()
+    total_rides = serializers.IntegerField()
+    wallet_balance_fcfa = serializers.IntegerField()
+
+
+class MeResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    data = UserMeSerializer()

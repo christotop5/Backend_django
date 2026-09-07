@@ -1,9 +1,71 @@
 openapi: 3.0.3
 info:
-  title: VORA Django Geo & Optimization API
+  title: VORA Platform API
   version: 1.0.0
-  description: Geolocation, zones, driver trajectories, turn optimization — OptimRoute
-    CM
+  description: "\n# VORA — Plateforme Taxi Jaune (Cameroun)\n\nAPI REST unifiée pour
+    l'écosystème **VORA** : application passager, cockpit chauffeur (taxi jaune),\ngéolocalisation
+    PostGIS, optimisation de tournées, paiements Mobile Money simulés et administration.\n\n**Production
+    :** `https://vora-ujbv.onrender.com/api/v1`  \n**Documentation interactive :**
+    `/api/v1/docs/`  \n**Schéma OpenAPI :** `/api/v1/schema/`\n\n---\n\n## Architecture
+    système\n\n| Couche | Rôle |\n|--------|------|\n| **Frontend** (mobile / web)
+    | UI passager & chauffeur — consomme cette API |\n| **Django (ce service)** |
+    Auth JWT, courses, paiements simulés, zones/carrefours, trajectoires, optimisation
+    PostGIS |\n| **PostgreSQL + PostGIS** | Données géo (zones, carrefours, corridors,
+    positions chauffeurs) |\n| **Google Maps API** | Géocodage, itinéraires, congestion
+    |\n| **Spring Boot** *(optionnel)* | Réservations — appelle `verify-destination`
+    et `optimize/turn` |\n\n---\n\n## Rôles utilisateur\n\n| Rôle | `role` JWT | Espace
+    frontend | Endpoints principaux |\n|------|------------|-----------------|----------------------|\n|
+    **Passager** | `passenger` | `pickup` — commander une course | `/rides/*`, `/payments/*`,
+    `/safety/sos` |\n| **Chauffeur** | `driver` | `driver-cockpit` — habitacle & revenus
+    | `/driver/*`, `/drivers/online` (lecture) |\n| **Admin** | `admin` *(futur)*
+    | Dashboard ops | `/admin/*` |\n\nAprès connexion, utiliser `user.redirect_dashboard`
+    : `pickup` ou `driver-cockpit`.\n\n---\n\n## Authentification\n\n1. **Inscription**
+    — `POST /auth/signup` (`role`: `passenger` \\| `driver`)\n2. **OTP** — `POST /auth/otp/verify`
+    avec code **`1234`** (simulation, pas d'email réel)\n3. **Connexion** — `POST
+    /auth/signin` → `access_token` JWT (24 h)\n4. **Requêtes protégées** — header
+    `Authorization: Bearer <access_token>`\n5. **Profil** — `GET /auth/me`\n\nCliquez
+    **Authorize** en haut à droite et entrez : `Bearer eyJ...`\n\n---\n\n## Données
+    de test (seed)\n\nCommande : `python manage.py seed_vora`\n\n| Entité | Quantité
+    | Villes |\n|--------|----------|--------|\n| Passagers | 50 | Yaoundé & Douala
+    |\n| Chauffeurs (taximen jaunes) | 10 | Yaoundé & Douala |\n| Carrefours | 32
+    | GPS réels |\n| Lignes / corridors | 6 | Y1–Y3, D1–D3 |\n\n**Mot de passe (tous
+    les comptes seed) :** `pass12345`\n\n| Rôle | Email exemple |\n|------|---------------|\n|
+    Passager | `marie.ebanda@gmail.com` |\n| Chauffeur | `alain.mvondo@vora.cm` |\n\n---\n\n##
+    Parcours passager (flow)\n\n```\nGET /carrefours?city=Yaoundé\n    ↓\nPOST /rides/estimate
+    \ { pickup_carrefour_id, destination_carrefour_id, ride_type }\n    ↓\nPOST /rides/request
+    \  { payment_method: cash|momo|om|wallet }\n    ↓\nGET  /rides/{ride_id}/status
+    \  (polling statut + chauffeur simulé)\n    ↓\nPOST /rides/{ride_id}/payment  (si
+    paiement à l'arrivée)\n    ↓\nPOST /rides/{ride_id}/rate     (note + pourboire
+    simulé)\n```\n\n---\n\n## Parcours chauffeur (flow)\n\n```\nPOST /driver/status
+    \     { is_online, current_location }\n    ↓\nPOST /driver/corridor    { corridor_id:
+    \"Y1\", direction: aller|retour }\n    ↓\nPATCH /driver/cabin-seats/{seat_id}
+    \  (occupation sièges, tarif rotation)\n    ↓\nPOST /driver/withdraw    (retrait
+    Mobile Money simulé)\n```\n\nCorridor IDs : `Y1`, `Y2`, `Y3` (Yaoundé), `D1`,
+    `D2`, `D3` (Douala) — voir `GET /corridors`.\n\n---\n\n## Paiements (simulation)\n\n>
+    **Aucun FCFA réel n'est débité.** Toutes les réponses incluent `\"simulation\":
+    true`.\n\n| Méthode | Endpoint |\n|---------|----------|\n| MTN MoMo | `POST /payments/mtn-momo`
+    |\n| Orange Money | `POST /payments/orange-money` |\n| Espèces | `POST /payments/cash/confirm`
+    |\n| Statut | `GET /payments/{transaction_id}/status` |\n\n---\n\n## Géolocalisation
+    & optimisation\n\n| Endpoint | Usage |\n|----------|-------|\n| `GET /geo/geocode`
+    | Adresse → coordonnées |\n| `GET /geo/route` | Itinéraire Google Maps |\n| `GET
+    /zones`, `/carrefours`, `/corridors` | Données de référence |\n| `GET /drivers/online`
+    | Chauffeurs disponibles (public) |\n| `POST /geo/verify-destination` | Vérifier
+    si destination ∈ corridor chauffeur (PostGIS) |\n| `POST /optimize/turn` | Optimisation
+    greedy tournée (jusqu'à 4 passagers) |\n\n---\n\n## Format des réponses\n\nSuccès
+    :\n```json\n{ \"success\": true, \"message\": \"...\", \"data\": { ... } }\n```\n\nErreur
+    :\n```json\n{\n  \"success\": false,\n  \"error\": { \"code\": \"INVALID_CREDENTIALS\",
+    \"message\": \"...\" },\n  \"timestamp\": \"2026-09-07T00:00:00Z\"\n}\n```\n\n---\n\n##
+    Codes d'erreur courants\n\n| Code | HTTP | Signification |\n|------|------|---------------|\n|
+    `INVALID_CREDENTIALS` | 401 | Email ou mot de passe incorrect |\n| `ACCOUNT_NOT_VERIFIED`
+    | 403 | OTP non validé |\n| `VALIDATION_FAILED` | 400 | Champs invalides |\n|
+    `RIDE_CONFLICT` | 409 | Course déjà en cours |\n| `INSUFFICIENT_FUNDS` | 402 |
+    Solde portefeuille insuffisant |\n| `NOT_FOUND` | 404 | Ressource introuvable
+    |\n"
+  contact:
+    name: VORA Engineering
+    email: dev@vora.cm
+  license:
+    name: Proprietary
 paths:
   /api/v1/admin/reports:
     get:
@@ -11,6 +73,7 @@ paths:
       tags:
       - Admin
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -26,6 +89,7 @@ paths:
       tags:
       - Admin
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -41,6 +105,7 @@ paths:
       tags:
       - Admin
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -54,29 +119,42 @@ paths:
   /api/v1/auth/me:
     get:
       operationId: auth_me_retrieve
+      description: Retourne rôle, solde portefeuille, note et statistiques. Nécessite
+        JWT.
+      summary: Profil utilisateur connecté
       tags:
       - Auth
+      security:
+      - BearerAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+          description: ''
   /api/v1/auth/otp/send:
     post:
       operationId: auth_otp_send_create
+      description: Simulation — le code est toujours **1234**. Aucun email réel n'est
+        envoyé.
+      summary: Renvoyer un code OTP
       tags:
       - Auth
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OTPSend'
+              $ref: '#/components/schemas/OTPSendRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/OTPSend'
+              $ref: '#/components/schemas/OTPSendRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OTPSend'
+              $ref: '#/components/schemas/OTPSendRequest'
         required: true
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -84,69 +162,130 @@ paths:
   /api/v1/auth/otp/verify:
     post:
       operationId: auth_otp_verify_create
+      description: Active le compte et retourne un JWT. Utiliser **1234** en environnement
+        de test.
+      summary: Vérifier le code OTP
       tags:
       - Auth
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OTPVerify'
+              $ref: '#/components/schemas/OTPVerifyRequest'
+            examples:
+              VérificationTest:
+                value:
+                  email: marie.ebanda@gmail.com
+                  otp: '1234'
+                summary: Vérification test
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/OTPVerify'
+              $ref: '#/components/schemas/OTPVerifyRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OTPVerify'
+              $ref: '#/components/schemas/OTPVerifyRequest'
         required: true
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OTPVerifyResponse'
+          description: ''
   /api/v1/auth/signin:
     post:
       operationId: auth_signin_create
+      description: 'Retourne un JWT Bearer (24 h) et le profil utilisateur avec `role`
+        et `redirect_dashboard`. Comptes seed : voir description générale — mot de
+        passe `pass12345`.'
+      summary: Connexion email / mot de passe
       tags:
       - Auth
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Signin'
+              $ref: '#/components/schemas/SigninRequest'
+            examples:
+              PassagerSeed:
+                value:
+                  email: marie.ebanda@gmail.com
+                  password: pass12345
+                summary: Passager seed
+              ChauffeurSeed:
+                value:
+                  email: alain.mvondo@vora.cm
+                  password: pass12345
+                summary: Chauffeur seed
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Signin'
+              $ref: '#/components/schemas/SigninRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Signin'
+              $ref: '#/components/schemas/SigninRequest'
         required: true
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SigninResponse'
+          description: ''
   /api/v1/auth/signup:
     post:
       operationId: auth_signup_create
+      description: Inscription avec rôle `passenger` ou `driver`. Pour les chauffeurs,
+        `vehicle_plate` est obligatoire. Un OTP est envoyé (simulation) — code fixe
+        **1234**.
+      summary: Créer un compte passager ou chauffeur
       tags:
       - Auth
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Signup'
+              $ref: '#/components/schemas/SignupRequest'
+            examples:
+              Passager:
+                value:
+                  email: marie.ebanda@gmail.com
+                  password: pass12345
+                  role: passenger
+                  name: Marie Ebanda
+                  phone: '+237699112233'
+              ChauffeurTaxiJaune:
+                value:
+                  email: alain.mvondo@vora.cm
+                  password: pass12345
+                  role: driver
+                  name: Alain Mvondo
+                  phone: '+237690123456'
+                  vehicle_plate: LT 482 CE
+                  corridor_axis: Poste Centrale ↔ Bastos
+                summary: Chauffeur taxi jaune
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Signup'
+              $ref: '#/components/schemas/SignupRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Signup'
+              $ref: '#/components/schemas/SignupRequest'
         required: true
       security:
+      - BearerAuth: []
       - {}
       responses:
-        '200':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupResponse'
+          description: ''
   /api/v1/carrefours:
     get:
       operationId: carrefours_list
@@ -162,6 +301,7 @@ paths:
       tags:
       - Carrefours
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -180,15 +320,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CarrefourCreate'
+              $ref: '#/components/schemas/CarrefourCreateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/CarrefourCreate'
+              $ref: '#/components/schemas/CarrefourCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CarrefourCreate'
+              $ref: '#/components/schemas/CarrefourCreateRequest'
         required: true
       security:
+      - BearerAuth: []
       - {}
       responses:
         '201':
@@ -200,6 +341,9 @@ paths:
   /api/v1/corridors:
     get:
       operationId: corridors_retrieve
+      description: 6 lignes seedées (Y1–Y3 Yaoundé, D1–D3 Douala). Filtrer par ville
+        avec `?city=`.
+      summary: Lister les lignes / corridors taxi
       parameters:
       - in: query
         name: city
@@ -208,6 +352,7 @@ paths:
       tags:
       - Corridors
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -219,6 +364,9 @@ paths:
   /api/v1/driver/cabin-seats/{seat_id}:
     patch:
       operationId: driver_cabin_seats_partial_update
+      description: Gère occupation, type passager (app / rue), tarif et statut paiement
+        pour un des 4 sièges.
+      summary: Mettre à jour un siège habitacle
       parameters:
       - in: path
         name: seat_id
@@ -231,73 +379,104 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedCabinSeat'
+              $ref: '#/components/schemas/PatchedCabinSeatRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedCabinSeat'
+              $ref: '#/components/schemas/PatchedCabinSeatRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedCabinSeat'
+              $ref: '#/components/schemas/PatchedCabinSeatRequest'
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/driver/corridor:
     post:
       operationId: driver_corridor_create
+      description: Associe le chauffeur à une ligne urbaine seedée (`Y1`, `D1`, etc.).
+        Retourne le nombre de passagers en attente estimé sur les arrêts du corridor.
+      summary: Sélectionner un corridor de rotation
       tags:
       - Driver
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DriverCorridor'
+              $ref: '#/components/schemas/DriverCorridorRequest'
+            examples:
+              LigneBastos—Poste(Yaoundé):
+                value:
+                  corridor_id: Y1
+                  direction: aller
+                summary: Ligne Bastos — Poste (Yaoundé)
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/DriverCorridor'
+              $ref: '#/components/schemas/DriverCorridorRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/DriverCorridor'
+              $ref: '#/components/schemas/DriverCorridorRequest'
         required: true
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/driver/status:
     post:
       operationId: driver_status_create
+      description: Met à jour le statut en ligne et la position GPS du chauffeur.
+        Retourne le corridor actif et le nombre de sièges libres.
+      summary: Mettre le chauffeur en ligne / hors ligne
       tags:
       - Driver
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DriverStatus'
+              $ref: '#/components/schemas/DriverStatusRequest'
+            examples:
+              EnLigne—YaoundéPosteCentrale:
+                value:
+                  is_online: true
+                  current_location:
+                    lat: 3.8667
+                    lng: 11.5167
+                summary: En ligne — Yaoundé Poste Centrale
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/DriverStatus'
+              $ref: '#/components/schemas/DriverStatusRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/DriverStatus'
+              $ref: '#/components/schemas/DriverStatusRequest'
         required: true
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/driver/withdraw:
     post:
       operationId: driver_withdraw_create
+      description: Débite le portefeuille chauffeur et simule un virement MTN/Orange
+        — aucun argent réel.
+      summary: Retrait Mobile Money simulé
       tags:
       - Driver
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DriverWithdraw'
+              $ref: '#/components/schemas/DriverWithdrawRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/DriverWithdraw'
+              $ref: '#/components/schemas/DriverWithdrawRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/DriverWithdraw'
+              $ref: '#/components/schemas/DriverWithdrawRequest'
         required: true
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
@@ -313,6 +492,7 @@ paths:
       tags:
       - Driver Trajectories
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -337,15 +517,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrajectoryCreate'
+              $ref: '#/components/schemas/TrajectoryCreateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TrajectoryCreate'
+              $ref: '#/components/schemas/TrajectoryCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TrajectoryCreate'
+              $ref: '#/components/schemas/TrajectoryCreateRequest'
         required: true
       security:
+      - BearerAuth: []
       - {}
       responses:
         '201':
@@ -374,14 +555,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrajectoryUpdate'
+              $ref: '#/components/schemas/TrajectoryUpdateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TrajectoryUpdate'
+              $ref: '#/components/schemas/TrajectoryUpdateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TrajectoryUpdate'
+              $ref: '#/components/schemas/TrajectoryUpdateRequest'
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -406,6 +588,7 @@ paths:
       tags:
       - Driver Trajectories
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -427,6 +610,7 @@ paths:
       tags:
       - Driver Trajectories
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -438,6 +622,9 @@ paths:
   /api/v1/drivers/online:
     get:
       operationId: drivers_online_retrieve
+      description: Liste les taximen jaunes actuellement en ligne avec position, sièges
+        libres et corridor. Endpoint public — pas de JWT requis.
+      summary: Chauffeurs en ligne (public)
       parameters:
       - in: query
         name: city
@@ -446,6 +633,7 @@ paths:
       tags:
       - Driver
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -466,6 +654,7 @@ paths:
       tags:
       - Geolocation
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -487,6 +676,7 @@ paths:
       tags:
       - Geolocation
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -515,6 +705,7 @@ paths:
       tags:
       - Geolocation
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -543,6 +734,7 @@ paths:
       tags:
       - Geolocation
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -562,15 +754,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VerifyDestination'
+              $ref: '#/components/schemas/VerifyDestinationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/VerifyDestination'
+              $ref: '#/components/schemas/VerifyDestinationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/VerifyDestination'
+              $ref: '#/components/schemas/VerifyDestinationRequest'
         required: true
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -583,9 +776,12 @@ paths:
   /api/v1/health:
     get:
       operationId: health_retrieve
+      description: Vérifie que le service Django geo/optimization répond.
+      summary: Health check
       tags:
       - System
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -601,6 +797,7 @@ paths:
       tags:
       - Optimization
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -620,15 +817,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OptimizeTurn'
+              $ref: '#/components/schemas/OptimizeTurnRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/OptimizeTurn'
+              $ref: '#/components/schemas/OptimizeTurnRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OptimizeTurn'
+              $ref: '#/components/schemas/OptimizeTurnRequest'
         required: true
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -641,6 +839,8 @@ paths:
   /api/v1/payments/{transaction_id}/status:
     get:
       operationId: payments_status_retrieve
+      description: Interroge l'état d'un paiement simulé par `transaction_id`.
+      summary: Statut d'une transaction
       parameters:
       - in: path
         name: transaction_id
@@ -649,76 +849,91 @@ paths:
         required: true
       tags:
       - Payments
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/payments/cash/confirm:
     post:
       operationId: payments_cash_confirm_create
-      description: Confirme un paiement espèces (simulation — chauffeur).
+      description: Enregistre un paiement cash simulé (chauffeur ou passager).
+      summary: Confirmer paiement espèces
       tags:
       - Payments
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CashConfirm'
+              $ref: '#/components/schemas/CashConfirmRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/CashConfirm'
+              $ref: '#/components/schemas/CashConfirmRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CashConfirm'
+              $ref: '#/components/schemas/CashConfirmRequest'
         required: true
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/payments/mtn-momo:
     post:
       operationId: payments_mtn_momo_create
-      description: Simulation MTN MoMo — aucun débit réel.
+      description: 'Aucun débit réel. Retourne `simulation: true` et un `transaction_id`
+        de test.'
+      summary: Paiement MTN MoMo simulé
       tags:
       - Payments
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MobilePayment'
+              $ref: '#/components/schemas/MobilePaymentRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/MobilePayment'
+              $ref: '#/components/schemas/MobilePaymentRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/MobilePayment'
+              $ref: '#/components/schemas/MobilePaymentRequest'
         required: true
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/payments/orange-money:
     post:
       operationId: payments_orange_money_create
-      description: Simulation Orange Money — aucun débit réel.
+      description: 'Aucun débit réel. Retourne `simulation: true` et un `transaction_id`
+        de test.'
+      summary: Paiement Orange Money simulé
       tags:
       - Payments
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MobilePayment'
+              $ref: '#/components/schemas/MobilePaymentRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/MobilePayment'
+              $ref: '#/components/schemas/MobilePaymentRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/MobilePayment'
+              $ref: '#/components/schemas/MobilePaymentRequest'
         required: true
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/rides/{ride_id}/payment:
     post:
       operationId: rides_payment_create
-      description: Pay for a ride at arrival — simulation only.
+      description: Simulation — déclenche le paiement selon la méthode enregistrée
+        sur la course.
+      summary: Payer la course à l'arrivée
       parameters:
       - in: path
         name: ride_id
@@ -728,12 +943,17 @@ paths:
       tags:
       - Rides
       - Payments
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/rides/{ride_id}/rate:
     post:
       operationId: rides_rate_create
+      description: Clôture la course, enregistre la note et simule le transfert du
+        pourboire.
+      summary: Noter le chauffeur et laisser un pourboire
       parameters:
       - in: path
         name: ride_id
@@ -746,20 +966,25 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RideRate'
+              $ref: '#/components/schemas/RideRateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/RideRate'
+              $ref: '#/components/schemas/RideRateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/RideRate'
+              $ref: '#/components/schemas/RideRateRequest'
         required: true
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/rides/{ride_id}/status:
     get:
       operationId: rides_status_retrieve
+      description: Polling du statut. Retourne un chauffeur simulé avec position et
+        ETA.
+      summary: Statut course & infos chauffeur
       parameters:
       - in: path
         name: ride_id
@@ -768,66 +993,91 @@ paths:
         required: true
       tags:
       - Rides
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/rides/estimate:
     post:
       operationId: rides_estimate_create
+      description: Calcule tarif partagé ou direct entre deux carrefours seedés (`GET
+        /carrefours`).
+      summary: Estimer le tarif d'une course
       tags:
       - Rides
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RideEstimate'
+              $ref: '#/components/schemas/RideEstimateRequest'
+            examples:
+              PosteCentrale→Bastos(partagé):
+                value:
+                  pickup_carrefour_id: 1
+                  destination_carrefour_id: 2
+                  ride_type: shared
+                  seats_requested: 1
+                summary: Poste Centrale → Bastos (partagé)
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/RideEstimate'
+              $ref: '#/components/schemas/RideEstimateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/RideEstimate'
+              $ref: '#/components/schemas/RideEstimateRequest'
         required: true
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/rides/request:
     post:
       operationId: rides_request_create
+      description: Crée une course et simule le matching taxi jaune. Paiement momo/om/wallet
+        déclenché immédiatement ; espèces à l'arrivée.
+      summary: Demander une course
       tags:
       - Rides
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RideRequest'
+              $ref: '#/components/schemas/RideRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/RideRequest'
+              $ref: '#/components/schemas/RideRequestRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/RideRequest'
+              $ref: '#/components/schemas/RideRequestRequest'
         required: true
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
   /api/v1/safety/sos:
     post:
       operationId: safety_sos_create
+      description: Enregistre la position GPS et crée un signalement urgent. Notification
+        simulée vers services de secours (117 / 113) et patrouilles VORA.
+      summary: Déclencher une alerte SOS
       tags:
       - Safety
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SOS'
+              $ref: '#/components/schemas/SOSRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SOS'
+              $ref: '#/components/schemas/SOSRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/SOS'
+              $ref: '#/components/schemas/SOSRequest'
         required: true
+      security:
+      - BearerAuth: []
       responses:
         '200':
           description: No response body
@@ -840,15 +1090,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Webhook'
+              $ref: '#/components/schemas/WebhookRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Webhook'
+              $ref: '#/components/schemas/WebhookRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Webhook'
+              $ref: '#/components/schemas/WebhookRequest'
         required: true
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -862,15 +1113,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Webhook'
+              $ref: '#/components/schemas/WebhookRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Webhook'
+              $ref: '#/components/schemas/WebhookRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Webhook'
+              $ref: '#/components/schemas/WebhookRequest'
         required: true
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -881,6 +1133,7 @@ paths:
       tags:
       - Zones
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -903,6 +1156,7 @@ paths:
       tags:
       - Zones
       security:
+      - BearerAuth: []
       - {}
       responses:
         '200':
@@ -913,6 +1167,40 @@ paths:
           description: ''
 components:
   schemas:
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identifiant public, ex. usr_42
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        vehicle_plate:
+          type: string
+          nullable: true
+        corridor_axis:
+          type: string
+        redirect_dashboard:
+          allOf:
+          - $ref: '#/components/schemas/RedirectDashboardEnum'
+          description: |-
+            Route frontend après connexion
+
+            * `pickup` - pickup
+            * `driver-cockpit` - driver-cockpit
+        is_verified:
+          type: boolean
+      required:
+      - email
+      - id
+      - name
+      - redirect_dashboard
+      - role
     CabinSeatPaymentMethodEnum:
       enum:
       - cash
@@ -967,7 +1255,7 @@ components:
       - name
       - updated_at
       - zone_id
-    CarrefourCreate:
+    CarrefourCreateRequest:
       type: object
       properties:
         zone_id:
@@ -975,6 +1263,7 @@ components:
           nullable: true
         name:
           type: string
+          minLength: 1
           maxLength: 150
         lat:
           type: number
@@ -989,7 +1278,7 @@ components:
       - lat
       - lng
       - name
-    CashConfirm:
+    CashConfirmRequest:
       type: object
       properties:
         amount_fcfa:
@@ -1061,17 +1350,18 @@ components:
       description: |-
         * `aller` - aller
         * `retour` - retour
-    DriverCorridor:
+    DriverCorridorRequest:
       type: object
       properties:
         corridor_id:
           type: string
+          minLength: 1
         direction:
           $ref: '#/components/schemas/DirectionEnum'
       required:
       - corridor_id
       - direction
-    DriverStatus:
+    DriverStatusRequest:
       type: object
       properties:
         is_online:
@@ -1084,7 +1374,7 @@ components:
       required:
       - current_location
       - is_online
-    DriverWithdraw:
+    DriverWithdrawRequest:
       type: object
       properties:
         amount_fcfa:
@@ -1094,12 +1384,13 @@ components:
           $ref: '#/components/schemas/ProviderEnum'
         phone_number:
           type: string
+          minLength: 1
           maxLength: 30
       required:
       - amount_fcfa
       - phone_number
       - provider
-    LatLng:
+    LatLngRequest:
       type: object
       properties:
         lat:
@@ -1111,7 +1402,17 @@ components:
       required:
       - lat
       - lng
-    MobilePayment:
+    MeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/UserMe'
+      required:
+      - data
+      - success
+    MobilePaymentRequest:
       type: object
       properties:
         amount_fcfa:
@@ -1119,6 +1420,7 @@ components:
           minimum: 100
         phone_number:
           type: string
+          minLength: 1
           maxLength: 30
         ride_id:
           type: string
@@ -1130,31 +1432,59 @@ components:
       required:
       - amount_fcfa
       - phone_number
-    OTPSend:
+    OTPSendRequest:
       type: object
       properties:
         email:
           type: string
           format: email
+          minLength: 1
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
           default: signup_verification
       required:
       - email
-    OTPVerify:
+    OTPVerifyData:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        user:
+          $ref: '#/components/schemas/AuthUser'
+      required:
+      - access_token
+      - refresh_token
+      - user
+    OTPVerifyRequest:
       type: object
       properties:
         email:
           type: string
           format: email
+          minLength: 1
         otp:
           type: string
-          maxLength: 4
           minLength: 4
+          maxLength: 4
       required:
       - email
       - otp
+    OTPVerifyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/OTPVerifyData'
+      required:
+      - data
+      - message
+      - success
     OnlineDriver:
       type: object
       properties:
@@ -1231,7 +1561,7 @@ components:
       - count
       - data
       - success
-    OptimizeTurn:
+    OptimizeTurnRequest:
       type: object
       properties:
         driver_id:
@@ -1248,7 +1578,7 @@ components:
       description: |-
         * `vora_app` - vora_app
         * `street_pickup` - street_pickup
-    PatchedCabinSeat:
+    PatchedCabinSeatRequest:
       type: object
       properties:
         is_occupied:
@@ -1281,7 +1611,15 @@ components:
       description: |-
         * `mtn_momo` - mtn_momo
         * `orange_money` - orange_money
-    RideEstimate:
+    RedirectDashboardEnum:
+      enum:
+      - pickup
+      - driver-cockpit
+      type: string
+      description: |-
+        * `pickup` - pickup
+        * `driver-cockpit` - driver-cockpit
+    RideEstimateRequest:
       type: object
       properties:
         pickup_carrefour_id:
@@ -1300,7 +1638,7 @@ components:
       required:
       - destination_carrefour_id
       - pickup_carrefour_id
-    RideRate:
+    RideRateRequest:
       type: object
       properties:
         rating:
@@ -1311,6 +1649,7 @@ components:
           type: array
           items:
             type: string
+            minLength: 1
         comment:
           type: string
           default: ''
@@ -1324,18 +1663,32 @@ components:
           default: momo
       required:
       - rating
-    RideRequest:
+    RideRequestPaymentMethodEnum:
+      enum:
+      - cash
+      - momo
+      - om
+      - wallet
+      type: string
+      description: |-
+        * `cash` - cash
+        * `momo` - momo
+        * `om` - om
+        * `wallet` - wallet
+    RideRequestRequest:
       type: object
       properties:
         pickup_carrefour_id:
           type: integer
         pickup_name:
           type: string
+          minLength: 1
           maxLength: 150
         destination_carrefour_id:
           type: integer
         destination_name:
           type: string
+          minLength: 1
           maxLength: 150
         ride_type:
           allOf:
@@ -1357,18 +1710,6 @@ components:
       - payment_method
       - pickup_carrefour_id
       - pickup_name
-    RideRequestPaymentMethodEnum:
-      enum:
-      - cash
-      - momo
-      - om
-      - wallet
-      type: string
-      description: |-
-        * `cash` - cash
-        * `momo` - momo
-        * `om` - om
-        * `wallet` - wallet
     RideTypeEnum:
       enum:
       - shared
@@ -1385,7 +1726,7 @@ components:
       description: |-
         * `passenger` - passenger
         * `driver` - driver
-    SOS:
+    SOSRequest:
       type: object
       properties:
         ride_id:
@@ -1395,29 +1736,89 @@ components:
           additionalProperties: {}
         emergency_type:
           type: string
+          minLength: 1
           default: police_or_danger
         battery_level_percent:
           type: integer
       required:
       - location
-    Signin:
+    SigninData:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          default: Bearer
+        expires_in:
+          type: integer
+          description: Durée de validité en secondes (86400 = 24 h)
+        user:
+          $ref: '#/components/schemas/AuthUser'
+      required:
+      - access_token
+      - expires_in
+      - user
+    SigninRequest:
       type: object
       properties:
         email:
           type: string
           format: email
+          minLength: 1
         password:
           type: string
           writeOnly: true
+          minLength: 1
       required:
       - email
       - password
-    Signup:
+    SigninResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/SigninData'
+      required:
+      - data
+      - message
+      - success
+    SignupData:
+      type: object
+      properties:
+        user_id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        is_verified:
+          type: boolean
+        otp_sent:
+          type: boolean
+        otp_expires_in_seconds:
+          type: integer
+      required:
+      - email
+      - is_verified
+      - name
+      - otp_expires_in_seconds
+      - otp_sent
+      - role
+      - user_id
+    SignupRequest:
       type: object
       properties:
         email:
           type: string
           format: email
+          minLength: 1
         password:
           type: string
           writeOnly: true
@@ -1426,6 +1827,7 @@ components:
           $ref: '#/components/schemas/RoleEnum'
         name:
           type: string
+          minLength: 1
           maxLength: 200
         phone:
           type: string
@@ -1441,6 +1843,19 @@ components:
       - name
       - password
       - role
+    SignupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/SignupData'
+      required:
+      - data
+      - message
+      - success
     TipPaymentMethodEnum:
       enum:
       - momo
@@ -1487,7 +1902,7 @@ components:
       - geometry
       - id
       - updated_at
-    TrajectoryCreate:
+    TrajectoryCreateRequest:
       type: object
       properties:
         name:
@@ -1496,7 +1911,7 @@ components:
         points:
           type: array
           items:
-            $ref: '#/components/schemas/LatLng'
+            $ref: '#/components/schemas/LatLngRequest'
         tolerance_meters:
           type: integer
           maximum: 5000
@@ -1504,16 +1919,17 @@ components:
           default: 500
       required:
       - points
-    TrajectoryUpdate:
+    TrajectoryUpdateRequest:
       type: object
       properties:
         name:
           type: string
+          minLength: 1
           maxLength: 150
         points:
           type: array
           items:
-            $ref: '#/components/schemas/LatLng'
+            $ref: '#/components/schemas/LatLngRequest'
         tolerance_meters:
           type: integer
           maximum: 5000
@@ -1530,13 +1946,49 @@ components:
         * `signup_verification` - signup_verification
         * `password_reset` - password_reset
         * `instant_login` - instant_login
-    VerifyDestination:
+    UserMe:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        phone:
+          type: string
+        vehicle_plate:
+          type: string
+          nullable: true
+        corridor_axis:
+          type: string
+        rating:
+          type: number
+          format: double
+        total_rides:
+          type: integer
+        wallet_balance_fcfa:
+          type: integer
+      required:
+      - corridor_axis
+      - email
+      - id
+      - name
+      - phone
+      - rating
+      - role
+      - total_rides
+      - wallet_balance_fcfa
+    VerifyDestinationRequest:
       type: object
       properties:
         driver_id:
           type: integer
         destination:
-          $ref: '#/components/schemas/LatLng'
+          $ref: '#/components/schemas/LatLngRequest'
         tolerance_meters:
           type: integer
           maximum: 5000
@@ -1544,14 +1996,16 @@ components:
       required:
       - destination
       - driver_id
-    Webhook:
+    WebhookRequest:
       type: object
       properties:
         provider_ref:
           type: string
+          minLength: 1
           maxLength: 128
         status:
           type: string
+          minLength: 1
           default: SUCCESS
       required:
       - provider_ref
@@ -1619,30 +2073,56 @@ components:
       - id
       - name
       - updated_at
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT obtenu via `POST /auth/signin` ou `POST /auth/otp/verify`.
+        Format header : `Authorization: Bearer <access_token>` — validité 24 h.'
+servers:
+- url: https://vora-ujbv.onrender.com/api/v1
+  description: Production (Render — Frankfurt)
+- url: http://localhost:8000/api/v1
+  description: Développement local
 tags:
-- name: Auth
-  description: Inscription, OTP, connexion JWT
-- name: Rides
-  description: Parcours passager — courses & tarifs
-- name: Driver
-  description: Parcours chauffeur — habitacle & retraits
-- name: Payments
-  description: Mobile Money & espèces — simulation (aucun argent réel)
-- name: Safety
-  description: SOS & alertes
-- name: Geolocation
-  description: Google Maps wrapper endpoints
-- name: Zones
-  description: Yaoundé taxi zones
-- name: Carrefours
-  description: Pickup/drop reference points (32 seeded in Yaoundé & Douala)
-- name: Corridors
-  description: Urban taxi corridor lines (Y1–Y3, D1–D3)
-- name: Driver Trajectories
-  description: Driver work corridors (turns)
-- name: Optimization
-  description: Turn optimizer & corridor matching
-- name: Admin
-  description: Dashboard aggregation endpoints
 - name: System
-  description: Health checks
+  description: Santé du service et métadonnées de déploiement.
+- name: Auth
+  description: 'Inscription, vérification OTP (code fixe **1234** en simulation),
+    connexion JWT et profil utilisateur. Deux rôles : `passenger` et `driver`.'
+- name: Rides
+  description: 'Parcours **passager** : estimation tarif, demande de course, suivi
+    statut, paiement à l''arrivée et notation. Nécessite JWT rôle passager côté frontend.'
+- name: Driver
+  description: 'Parcours **chauffeur taxi jaune** : mise en ligne, sélection de corridor,
+    gestion des 4 sièges habitacle, retrait Mobile Money simulé. `GET /drivers/online`
+    est public (liste des chauffeurs en ligne).'
+- name: Payments
+  description: MTN MoMo, Orange Money et espèces — **simulation uniquement**, aucun
+    argent réel. Webhooks simulés pour tests d'intégration.
+- name: Safety
+  description: Alerte SOS avec position GPS — enregistrement signalement + notification
+    simulée.
+- name: Geolocation
+  description: 'Wrapper Google Maps : géocodage, géocodage inverse, itinéraires et
+    congestion par zone.'
+- name: Zones
+  description: Zones urbaines taxi (Yaoundé & Douala) avec limites PostGIS optionnelles.
+- name: Carrefours
+  description: '32 carrefours seedés (Yaoundé & Douala) : coordonnées GPS, zone, passagers
+    en attente typiques, tarif standard vers le centre.'
+- name: Corridors
+  description: '6 lignes urbaines taxi jaune (Y1–Y3 Yaoundé, D1–D3 Douala) : arrêts,
+    tarif standard, distance et durée estimée.'
+- name: Driver Trajectories
+  description: Corridors de travail déclarés par chauffeur (LineString PostGIS). Utilisés
+    par l'optimiseur et `verify-destination`.
+- name: Optimization
+  description: 'Moteur d''optimisation MVP : matching PostGIS ST_DWithin, sélection
+    greedy jusqu''à 4 passagers, heatmap demande.'
+- name: Admin
+  description: 'Agrégations dashboard : zones, signalements, statistiques journalières.'
+externalDocs:
+  url: https://github.com/vora-cm/backend/blob/main/Backend_django/docs/API.md
+  description: Guide API complet (Markdown)

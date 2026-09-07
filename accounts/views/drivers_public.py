@@ -15,6 +15,11 @@ class OnlineDriversView(APIView):
         parameters=[OpenApiParameter('city', str, OpenApiParameter.QUERY, required=False)],
         responses={200: OnlineDriversResponseSerializer},
         tags=['Driver'],
+        summary='Chauffeurs en ligne (public)',
+        description=(
+            'Liste les taximen jaunes actuellement en ligne avec position, sièges libres et corridor. '
+            'Endpoint public — pas de JWT requis.'
+        ),
     )
     def get(self, request):
         driver_role = Role.objects.filter(name='DRIVER').first()
