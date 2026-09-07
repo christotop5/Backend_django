@@ -1,5 +1,8 @@
+import secrets
+
 from django.db import models
 
+from accounts.models import User
 from core.models import Client, Order
 
 
@@ -67,3 +70,50 @@ class PaymentLink(models.Model):
 
     def __str__(self):
         return f'{self.token} ({self.amount} {self.devise})'
+
+
+class PaymentTransaction(models.Model):
+    class Provider(models.TextChoices):
+        MTN_MOMO = 'mtn_momo', 'MTN MoMo'
+        ORANGE_MONEY = 'orange_money', 'Orange Money'
+        CASH = 'cash', 'Cash'
+        WALLET = 'wallet', 'Wallet'
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        CONFIRMED = 'confirmed', 'Confirmed'
+        FAILED = 'failed', 'Failed'
+
+    transaction_id = models.CharField(max_length=64, unique=True, db_index=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        db_column='user_id',
+    )
+    ride_id = models.CharField(max_length=32, blank=True, default='')
+    amount_fcfa = models.PositiveIntegerField()
+    provider = models.CharField(max_length=20, choices=Provider.choices)
+    phone_number = models.CharField(max_length=30, blank=True, default='')
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    provider_ref = models.CharField(max_length=128, blank=True, default='')
+    description = models.TextField(blank=True, default='')
+    metadata = models.JSONField(default=dict, blank=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'payment_transactions'
+        ordering = ['-created_at']
+
+    @classmethod
+    def generate_id(cls, prefix: str = 'pay') -> str:
+        return f'{prefix}_{secrets.token_hex(6)}'
+
+    def __str__(self):
+        return f'{self.transaction_id} ({self.amount_fcfa} XAF — {self.status})'

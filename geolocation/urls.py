@@ -1,6 +1,7 @@
 from django.urls import path
 
 from geolocation.views.carrefours import CarrefourListCreateView
+from geolocation.views.corridors import CorridorListView
 from geolocation.views.geo import CongestionView, GeocodeView, ReverseGeocodeView, RouteView
 from geolocation.views.trajectories import (
     TrajectoryActiveView,
@@ -17,6 +18,7 @@ urlpatterns = [
     path('zones', ZoneListView.as_view(), name='zone-list'),
     path('zones/<int:pk>', ZoneDetailView.as_view(), name='zone-detail'),
     path('carrefours', CarrefourListCreateView.as_view(), name='carrefour-list-create'),
+    path('corridors', CorridorListView.as_view(), name='corridor-list'),
     path('drivers/<int:driver_id>/trajectories', TrajectoryListCreateView.as_view(), name='trajectory-list-create'),
     path('drivers/<int:driver_id>/trajectories/active', TrajectoryActiveView.as_view(), name='trajectory-active'),
     path('drivers/<int:driver_id>/trajectories/<int:trajectory_id>', TrajectoryDetailView.as_view(), name='trajectory-detail'),

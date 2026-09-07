@@ -55,8 +55,43 @@ class User(models.Model):
     class Meta:
         db_table = 'users'
 
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
     def __str__(self):
         return self.email
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile',
+        db_column='user_id',
+    )
+    corridor_axis = models.CharField(max_length=255, blank=True, default='')
+    username = models.CharField(max_length=80, blank=True, default='')
+    city = models.CharField(max_length=50, blank=True, default='')
+    preferred_payment = models.CharField(max_length=20, blank=True, default='')
+    driver_metadata = models.JSONField(default=dict, blank=True)
+    rating = models.DecimalField(max_digits=3, decimal_places=2, default=5.0)
+    total_rides = models.PositiveIntegerField(default=0)
+    wallet_balance_fcfa = models.PositiveIntegerField(default=0)
+    is_online = models.BooleanField(default=False)
+    current_lat = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    current_lng = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    active_corridor = models.CharField(max_length=255, blank=True, default='')
+    cabin_seats = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'user_profiles'
 
 
 class JWTBlacklist(models.Model):

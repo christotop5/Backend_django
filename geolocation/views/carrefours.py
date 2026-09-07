@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
@@ -9,10 +9,20 @@ from geolocation.serializers import CarrefourCreateSerializer, CarrefourSerializ
 
 class CarrefourListCreateView(generics.ListAPIView):
     serializer_class = CarrefourSerializer
+    pagination_class = None
 
-    @extend_schema(tags=['Carrefours'])
+    @extend_schema(
+        tags=['Carrefours'],
+        parameters=[
+            OpenApiParameter('zone_id', int, OpenApiParameter.QUERY, required=False),
+            OpenApiParameter('city', str, OpenApiParameter.QUERY, required=False),
+        ],
+        responses={200: CarrefourSerializer(many=True)},
+    )
     def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
+        qs = self.get_queryset()
+        data = CarrefourSerializer(qs, many=True).data
+        return Response(data)
 
     @extend_schema(request=CarrefourCreateSerializer, responses={201: CarrefourSerializer}, tags=['Carrefours'])
     def post(self, request, *args, **kwargs):
@@ -35,6 +45,9 @@ class CarrefourListCreateView(generics.ListAPIView):
     def get_queryset(self):
         qs = Carrefour.objects.select_related('zone').order_by('name')
         zone_id = self.request.query_params.get('zone_id')
+        city = self.request.query_params.get('city')
         if zone_id:
             qs = qs.filter(zone_id=zone_id)
+        if city:
+            qs = qs.filter(city__icontains=city)
         return qs

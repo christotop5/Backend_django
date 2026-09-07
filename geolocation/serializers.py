@@ -39,8 +39,9 @@ class CarrefourSerializer(serializers.ModelSerializer):
     class Meta:
         model = Carrefour
         fields = [
-            'id', 'zone_id', 'name', 'location', 'is_pickup_point',
-            'created_at', 'updated_at',
+            'id', 'zone_id', 'name', 'city', 'location', 'is_pickup_point',
+            'is_major_intersection', 'typical_waiting_passengers',
+            'standard_fare_to_centre_fcfa', 'created_at', 'updated_at',
         ]
 
     def get_location(self, obj):
@@ -88,3 +89,49 @@ class CongestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CongestionSnapshot
         fields = ['zone_id', 'congestion_level', 'source', 'recorded_at']
+
+
+class CorridorLineSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    code = serializers.CharField()
+    city = serializers.CharField()
+    name = serializers.CharField()
+    start_point = serializers.CharField()
+    end_point = serializers.CharField()
+    stops = serializers.ListField(child=serializers.CharField())
+    standard_fare_fcfa = serializers.IntegerField()
+    distance_km = serializers.FloatField()
+    estimated_duration_min = serializers.IntegerField()
+
+
+class CorridorListResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    count = serializers.IntegerField()
+    data = CorridorLineSerializer(many=True)
+
+
+class OnlineDriverLocationSerializer(serializers.Serializer):
+    lat = serializers.FloatField(allow_null=True)
+    lng = serializers.FloatField(allow_null=True)
+
+
+class OnlineDriverSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    username = serializers.CharField()
+    email = serializers.EmailField()
+    full_name = serializers.CharField()
+    city = serializers.CharField()
+    license_plate = serializers.CharField(allow_null=True)
+    car_model = serializers.CharField(allow_null=True)
+    corridor_line = serializers.CharField()
+    available_seats = serializers.IntegerField()
+    total_seats = serializers.IntegerField()
+    rating = serializers.FloatField()
+    status = serializers.CharField()
+    location = OnlineDriverLocationSerializer()
+
+
+class OnlineDriversResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    count = serializers.IntegerField()
+    data = OnlineDriverSerializer(many=True)

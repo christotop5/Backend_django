@@ -107,6 +107,7 @@ INSTALLED_APPS = [
     'geolocation',
     'optimization',
     'operations',
+    'rides',
 ]
 
 MIDDLEWARE = [
@@ -165,6 +166,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'accounts.authentication.JWTAuthentication',
+    ],
+    'EXCEPTION_HANDLER': 'config.exceptions.vora_exception_handler',
 }
 
 SPECTACULAR_SETTINGS = {
@@ -173,9 +178,15 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'TAGS': [
+        {'name': 'Auth', 'description': 'Inscription, OTP, connexion JWT'},
+        {'name': 'Rides', 'description': 'Parcours passager — courses & tarifs'},
+        {'name': 'Driver', 'description': 'Parcours chauffeur — habitacle & retraits'},
+        {'name': 'Payments', 'description': 'Mobile Money & espèces — simulation (aucun argent réel)'},
+        {'name': 'Safety', 'description': 'SOS & alertes'},
         {'name': 'Geolocation', 'description': 'Google Maps wrapper endpoints'},
         {'name': 'Zones', 'description': 'Yaoundé taxi zones'},
-        {'name': 'Carrefours', 'description': 'Pickup/drop reference points'},
+        {'name': 'Carrefours', 'description': 'Pickup/drop reference points (32 seeded in Yaoundé & Douala)'},
+        {'name': 'Corridors', 'description': 'Urban taxi corridor lines (Y1–Y3, D1–D3)'},
         {'name': 'Driver Trajectories', 'description': 'Driver work corridors (turns)'},
         {'name': 'Optimization', 'description': 'Turn optimizer & corridor matching'},
         {'name': 'Admin', 'description': 'Dashboard aggregation endpoints'},

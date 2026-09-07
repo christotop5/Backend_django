@@ -4,6 +4,9 @@ set -euo pipefail
 echo "Running database migrations..."
 python manage.py migrate --noinput
 
+echo "Seeding VORA test data (upsert — safe on shared DB)..."
+python manage.py seed_vora
+
 echo "Starting Gunicorn on port ${PORT:-8000}..."
 exec gunicorn config.wsgi:application \
   --bind "0.0.0.0:${PORT:-8000}" \

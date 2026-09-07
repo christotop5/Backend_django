@@ -69,7 +69,9 @@ Ensure PostGIS is enabled (already done via Django migration `CreateExtension('p
 Render will:
 1. Build Docker image (installs GDAL/GEOS for GeoDjango)
 2. Run `collectstatic`
-3. On start: `migrate` → `gunicorn`
+3. On start: `migrate` → `seed_vora` (upsert test data) → `gunicorn`
+
+The seed step is **idempotent** (no `--flush`): it upserts 50 passengers, 10 drivers, 32 carrefours, and 6 corridors. Safe on a shared DB — local and Render use the same data after deploy.
 
 ---
 

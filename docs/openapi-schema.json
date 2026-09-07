@@ -11,8 +11,6 @@ paths:
       tags:
       - Admin
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -28,8 +26,6 @@ paths:
       tags:
       - Admin
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -45,8 +41,6 @@ paths:
       tags:
       - Admin
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -57,14 +51,117 @@ paths:
                 items:
                   $ref: '#/components/schemas/ZoneDetail'
           description: ''
+  /api/v1/auth/me:
+    get:
+      operationId: auth_me_retrieve
+      tags:
+      - Auth
+      responses:
+        '200':
+          description: No response body
+  /api/v1/auth/otp/send:
+    post:
+      operationId: auth_otp_send_create
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OTPSend'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OTPSend'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OTPSend'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/auth/otp/verify:
+    post:
+      operationId: auth_otp_verify_create
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OTPVerify'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OTPVerify'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OTPVerify'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/auth/signin:
+    post:
+      operationId: auth_signin_create
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Signin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Signin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Signin'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/auth/signup:
+    post:
+      operationId: auth_signup_create
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Signup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Signup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Signup'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/v1/carrefours:
     get:
       operationId: carrefours_list
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+      - in: query
+        name: zone_id
+        schema:
+          type: integer
       tags:
       - Carrefours
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -92,8 +189,6 @@ paths:
               $ref: '#/components/schemas/CarrefourCreate'
         required: true
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '201':
@@ -102,6 +197,110 @@ paths:
               schema:
                 $ref: '#/components/schemas/Carrefour'
           description: ''
+  /api/v1/corridors:
+    get:
+      operationId: corridors_retrieve
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+      tags:
+      - Corridors
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorridorListResponse'
+          description: ''
+  /api/v1/driver/cabin-seats/{seat_id}:
+    patch:
+      operationId: driver_cabin_seats_partial_update
+      parameters:
+      - in: path
+        name: seat_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Driver
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCabinSeat'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCabinSeat'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCabinSeat'
+      responses:
+        '200':
+          description: No response body
+  /api/v1/driver/corridor:
+    post:
+      operationId: driver_corridor_create
+      tags:
+      - Driver
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverCorridor'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DriverCorridor'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DriverCorridor'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/driver/status:
+    post:
+      operationId: driver_status_create
+      tags:
+      - Driver
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverStatus'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DriverStatus'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DriverStatus'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/driver/withdraw:
+    post:
+      operationId: driver_withdraw_create
+      tags:
+      - Driver
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverWithdraw'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DriverWithdraw'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DriverWithdraw'
+        required: true
+      responses:
+        '200':
+          description: No response body
   /api/v1/drivers/{driver_id}/trajectories:
     get:
       operationId: drivers_trajectories_list
@@ -114,8 +313,6 @@ paths:
       tags:
       - Driver Trajectories
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -149,8 +346,6 @@ paths:
               $ref: '#/components/schemas/TrajectoryCreate'
         required: true
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '201':
@@ -187,8 +382,6 @@ paths:
             schema:
               $ref: '#/components/schemas/TrajectoryUpdate'
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -213,8 +406,6 @@ paths:
       tags:
       - Driver Trajectories
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -236,8 +427,6 @@ paths:
       tags:
       - Driver Trajectories
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -245,6 +434,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Trajectory'
+          description: ''
+  /api/v1/drivers/online:
+    get:
+      operationId: drivers_online_retrieve
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+      tags:
+      - Driver
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnlineDriversResponse'
           description: ''
   /api/v1/geo/congestion:
     get:
@@ -258,8 +466,6 @@ paths:
       tags:
       - Geolocation
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -281,8 +487,6 @@ paths:
       tags:
       - Geolocation
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -311,8 +515,6 @@ paths:
       tags:
       - Geolocation
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -341,8 +543,6 @@ paths:
       tags:
       - Geolocation
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -371,8 +571,6 @@ paths:
               $ref: '#/components/schemas/VerifyDestination'
         required: true
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -388,8 +586,6 @@ paths:
       tags:
       - System
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -405,8 +601,6 @@ paths:
       tags:
       - Optimization
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -435,8 +629,6 @@ paths:
               $ref: '#/components/schemas/OptimizeTurn'
         required: true
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -446,14 +638,249 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/v1/payments/{transaction_id}/status:
+    get:
+      operationId: payments_status_retrieve
+      parameters:
+      - in: path
+        name: transaction_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Payments
+      responses:
+        '200':
+          description: No response body
+  /api/v1/payments/cash/confirm:
+    post:
+      operationId: payments_cash_confirm_create
+      description: Confirme un paiement espèces (simulation — chauffeur).
+      tags:
+      - Payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashConfirm'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CashConfirm'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CashConfirm'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/payments/mtn-momo:
+    post:
+      operationId: payments_mtn_momo_create
+      description: Simulation MTN MoMo — aucun débit réel.
+      tags:
+      - Payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobilePayment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MobilePayment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MobilePayment'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/payments/orange-money:
+    post:
+      operationId: payments_orange_money_create
+      description: Simulation Orange Money — aucun débit réel.
+      tags:
+      - Payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobilePayment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MobilePayment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MobilePayment'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/rides/{ride_id}/payment:
+    post:
+      operationId: rides_payment_create
+      description: Pay for a ride at arrival — simulation only.
+      parameters:
+      - in: path
+        name: ride_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Rides
+      - Payments
+      responses:
+        '200':
+          description: No response body
+  /api/v1/rides/{ride_id}/rate:
+    post:
+      operationId: rides_rate_create
+      parameters:
+      - in: path
+        name: ride_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Rides
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RideRate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RideRate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RideRate'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/rides/{ride_id}/status:
+    get:
+      operationId: rides_status_retrieve
+      parameters:
+      - in: path
+        name: ride_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Rides
+      responses:
+        '200':
+          description: No response body
+  /api/v1/rides/estimate:
+    post:
+      operationId: rides_estimate_create
+      tags:
+      - Rides
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RideEstimate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RideEstimate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RideEstimate'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/rides/request:
+    post:
+      operationId: rides_request_create
+      tags:
+      - Rides
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RideRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RideRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RideRequest'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/safety/sos:
+    post:
+      operationId: safety_sos_create
+      tags:
+      - Safety
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SOS'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SOS'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SOS'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/webhooks/mtn-momo:
+    post:
+      operationId: webhooks_mtn_momo_create
+      tags:
+      - Payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/webhooks/orange-money:
+    post:
+      operationId: webhooks_orange_money_create
+      tags:
+      - Payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/v1/zones:
     get:
       operationId: zones_list
       tags:
       - Zones
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -476,8 +903,6 @@ paths:
       tags:
       - Zones
       security:
-      - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -488,6 +913,14 @@ paths:
           description: ''
 components:
   schemas:
+    CabinSeatPaymentMethodEnum:
+      enum:
+      - cash
+      - momo
+      type: string
+      description: |-
+        * `cash` - cash
+        * `momo` - momo
     Carrefour:
       type: object
       properties:
@@ -501,11 +934,24 @@ components:
         name:
           type: string
           maxLength: 150
+        city:
+          type: string
+          maxLength: 50
         location:
           type: string
           readOnly: true
         is_pickup_point:
           type: boolean
+        is_major_intersection:
+          type: boolean
+        typical_waiting_passengers:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        standard_fare_to_centre_fcfa:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
         created_at:
           type: string
           format: date-time
@@ -543,6 +989,116 @@ components:
       - lat
       - lng
       - name
+    CashConfirm:
+      type: object
+      properties:
+        amount_fcfa:
+          type: integer
+          minimum: 100
+        ride_id:
+          type: string
+          default: ''
+          maxLength: 32
+      required:
+      - amount_fcfa
+    CorridorLine:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        city:
+          type: string
+        name:
+          type: string
+        start_point:
+          type: string
+        end_point:
+          type: string
+        stops:
+          type: array
+          items:
+            type: string
+        standard_fare_fcfa:
+          type: integer
+        distance_km:
+          type: number
+          format: double
+        estimated_duration_min:
+          type: integer
+      required:
+      - city
+      - code
+      - distance_km
+      - end_point
+      - estimated_duration_min
+      - id
+      - name
+      - standard_fare_fcfa
+      - start_point
+      - stops
+    CorridorListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        count:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CorridorLine'
+      required:
+      - count
+      - data
+      - success
+    DirectionEnum:
+      enum:
+      - aller
+      - retour
+      type: string
+      description: |-
+        * `aller` - aller
+        * `retour` - retour
+    DriverCorridor:
+      type: object
+      properties:
+        corridor_id:
+          type: string
+        direction:
+          $ref: '#/components/schemas/DirectionEnum'
+      required:
+      - corridor_id
+      - direction
+    DriverStatus:
+      type: object
+      properties:
+        is_online:
+          type: boolean
+        current_location:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+      required:
+      - current_location
+      - is_online
+    DriverWithdraw:
+      type: object
+      properties:
+        amount_fcfa:
+          type: integer
+          minimum: 500
+        provider:
+          $ref: '#/components/schemas/ProviderEnum'
+        phone_number:
+          type: string
+          maxLength: 30
+      required:
+      - amount_fcfa
+      - phone_number
+      - provider
     LatLng:
       type: object
       properties:
@@ -555,6 +1111,126 @@ components:
       required:
       - lat
       - lng
+    MobilePayment:
+      type: object
+      properties:
+        amount_fcfa:
+          type: integer
+          minimum: 100
+        phone_number:
+          type: string
+          maxLength: 30
+        ride_id:
+          type: string
+          default: ''
+          maxLength: 32
+        description:
+          type: string
+          default: ''
+      required:
+      - amount_fcfa
+      - phone_number
+    OTPSend:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          default: signup_verification
+      required:
+      - email
+    OTPVerify:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        otp:
+          type: string
+          maxLength: 4
+          minLength: 4
+      required:
+      - email
+      - otp
+    OnlineDriver:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        city:
+          type: string
+        license_plate:
+          type: string
+          nullable: true
+        car_model:
+          type: string
+          nullable: true
+        corridor_line:
+          type: string
+        available_seats:
+          type: integer
+        total_seats:
+          type: integer
+        rating:
+          type: number
+          format: double
+        status:
+          type: string
+        location:
+          $ref: '#/components/schemas/OnlineDriverLocation'
+      required:
+      - available_seats
+      - car_model
+      - city
+      - corridor_line
+      - email
+      - full_name
+      - id
+      - license_plate
+      - location
+      - rating
+      - status
+      - total_seats
+      - username
+    OnlineDriverLocation:
+      type: object
+      properties:
+        lat:
+          type: number
+          format: double
+          nullable: true
+        lng:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - lat
+      - lng
+    OnlineDriversResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        count:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OnlineDriver'
+      required:
+      - count
+      - data
+      - success
     OptimizeTurn:
       type: object
       properties:
@@ -564,6 +1240,217 @@ components:
           type: integer
       required:
       - driver_id
+    PassengerTypeEnum:
+      enum:
+      - vora_app
+      - street_pickup
+      type: string
+      description: |-
+        * `vora_app` - vora_app
+        * `street_pickup` - street_pickup
+    PatchedCabinSeat:
+      type: object
+      properties:
+        is_occupied:
+          type: boolean
+        passenger_type:
+          $ref: '#/components/schemas/PassengerTypeEnum'
+        pickup_point:
+          type: string
+        dropoff_point:
+          type: string
+        fare_fcfa:
+          type: integer
+        payment_status:
+          $ref: '#/components/schemas/PaymentStatusEnum'
+        payment_method:
+          $ref: '#/components/schemas/CabinSeatPaymentMethodEnum'
+    PaymentStatusEnum:
+      enum:
+      - paid
+      - pending
+      type: string
+      description: |-
+        * `paid` - paid
+        * `pending` - pending
+    ProviderEnum:
+      enum:
+      - mtn_momo
+      - orange_money
+      type: string
+      description: |-
+        * `mtn_momo` - mtn_momo
+        * `orange_money` - orange_money
+    RideEstimate:
+      type: object
+      properties:
+        pickup_carrefour_id:
+          type: integer
+        destination_carrefour_id:
+          type: integer
+        ride_type:
+          allOf:
+          - $ref: '#/components/schemas/RideTypeEnum'
+          default: shared
+        seats_requested:
+          type: integer
+          maximum: 4
+          minimum: 1
+          default: 1
+      required:
+      - destination_carrefour_id
+      - pickup_carrefour_id
+    RideRate:
+      type: object
+      properties:
+        rating:
+          type: integer
+          maximum: 5
+          minimum: 1
+        compliments:
+          type: array
+          items:
+            type: string
+        comment:
+          type: string
+          default: ''
+        tip_fcfa:
+          type: integer
+          minimum: 0
+          default: 0
+        tip_payment_method:
+          allOf:
+          - $ref: '#/components/schemas/TipPaymentMethodEnum'
+          default: momo
+      required:
+      - rating
+    RideRequest:
+      type: object
+      properties:
+        pickup_carrefour_id:
+          type: integer
+        pickup_name:
+          type: string
+          maxLength: 150
+        destination_carrefour_id:
+          type: integer
+        destination_name:
+          type: string
+          maxLength: 150
+        ride_type:
+          allOf:
+          - $ref: '#/components/schemas/RideTypeEnum'
+          default: shared
+        seats_count:
+          type: integer
+          maximum: 4
+          minimum: 1
+          default: 1
+        payment_method:
+          $ref: '#/components/schemas/RideRequestPaymentMethodEnum'
+        passenger_notes:
+          type: string
+          default: ''
+      required:
+      - destination_carrefour_id
+      - destination_name
+      - payment_method
+      - pickup_carrefour_id
+      - pickup_name
+    RideRequestPaymentMethodEnum:
+      enum:
+      - cash
+      - momo
+      - om
+      - wallet
+      type: string
+      description: |-
+        * `cash` - cash
+        * `momo` - momo
+        * `om` - om
+        * `wallet` - wallet
+    RideTypeEnum:
+      enum:
+      - shared
+      - direct
+      type: string
+      description: |-
+        * `shared` - shared
+        * `direct` - direct
+    RoleEnum:
+      enum:
+      - passenger
+      - driver
+      type: string
+      description: |-
+        * `passenger` - passenger
+        * `driver` - driver
+    SOS:
+      type: object
+      properties:
+        ride_id:
+          type: string
+        location:
+          type: object
+          additionalProperties: {}
+        emergency_type:
+          type: string
+          default: police_or_danger
+        battery_level_percent:
+          type: integer
+      required:
+      - location
+    Signin:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    Signup:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        name:
+          type: string
+          maxLength: 200
+        phone:
+          type: string
+          maxLength: 30
+        vehicle_plate:
+          type: string
+          maxLength: 30
+        corridor_axis:
+          type: string
+          maxLength: 255
+      required:
+      - email
+      - name
+      - password
+      - role
+    TipPaymentMethodEnum:
+      enum:
+      - momo
+      - om
+      - cash
+      type: string
+      description: |-
+        * `momo` - momo
+        * `om` - om
+        * `cash` - cash
     Trajectory:
       type: object
       properties:
@@ -633,6 +1520,16 @@ components:
           minimum: 50
         is_active:
           type: boolean
+    TypeEnum:
+      enum:
+      - signup_verification
+      - password_reset
+      - instant_login
+      type: string
+      description: |-
+        * `signup_verification` - signup_verification
+        * `password_reset` - password_reset
+        * `instant_login` - instant_login
     VerifyDestination:
       type: object
       properties:
@@ -647,6 +1544,17 @@ components:
       required:
       - destination
       - driver_id
+    Webhook:
+      type: object
+      properties:
+        provider_ref:
+          type: string
+          maxLength: 128
+        status:
+          type: string
+          default: SUCCESS
+      required:
+      - provider_ref
     ZoneDetail:
       type: object
       properties:
@@ -711,21 +1619,25 @@ components:
       - id
       - name
       - updated_at
-  securitySchemes:
-    basicAuth:
-      type: http
-      scheme: basic
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: sessionid
 tags:
+- name: Auth
+  description: Inscription, OTP, connexion JWT
+- name: Rides
+  description: Parcours passager — courses & tarifs
+- name: Driver
+  description: Parcours chauffeur — habitacle & retraits
+- name: Payments
+  description: Mobile Money & espèces — simulation (aucun argent réel)
+- name: Safety
+  description: SOS & alertes
 - name: Geolocation
   description: Google Maps wrapper endpoints
 - name: Zones
   description: Yaoundé taxi zones
 - name: Carrefours
-  description: Pickup/drop reference points
+  description: Pickup/drop reference points (32 seeded in Yaoundé & Douala)
+- name: Corridors
+  description: Urban taxi corridor lines (Y1–Y3, D1–D3)
 - name: Driver Trajectories
   description: Driver work corridors (turns)
 - name: Optimization
