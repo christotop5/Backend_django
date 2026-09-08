@@ -93,13 +93,36 @@ curl -X POST http://localhost:8000/api/v1/auth/signin \
 
 ## Rides, Driver, Safety
 
+> **Map & lifecycle guide:** [`docs/FRONTEND_RIDES_MAP.md`](./FRONTEND_RIDES_MAP.md)
+
+### Radar & map
+
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| GET | `/geo/nearest-carrefour?lat=&lng=` | — closest carrefours |
+| GET | `/rides/nearby-drivers?lat=&lng=&seats=` | — real taxis on map |
+| GET | `/rides/{ride_id}/map` | Bearer — passenger map |
+| GET | `/driver/rides/pending` | Driver — booking requests |
+| GET | `/driver/rides/active` | Driver — clients on map |
+| GET | `/driver/rides/{ride_id}/map` | Driver |
+
+### Ride lifecycle
+
+| Method | Endpoint | Who |
+|--------|----------|-----|
+| POST | `/rides/request` | Passenger — matches nearest driver, **no payment yet** |
+| POST | `/driver/rides/{id}/approve` | Driver |
+| POST | `/driver/rides/{id}/reject` | Driver |
+| POST | `/rides/{id}/passenger-arrived` | Passenger — "I'm here" |
+| POST | `/rides/{id}/board` | Passenger — occupies seats |
+| POST | `/driver/rides/{id}/complete` | Driver — end trip |
+| POST | `/rides/{id}/payment` | Passenger — **pay at end** (phone for MoMo) |
+| POST | `/rides/{id}/rate` | Passenger |
+| GET | `/rides/{id}/status` | Passenger |
+
 | Method | Endpoint | Auth |
 |--------|----------|------|
 | POST | `/rides/estimate` | Bearer |
-| POST | `/rides/request` | Bearer |
-| GET | `/rides/{ride_id}/status` | Bearer |
-| POST | `/rides/{ride_id}/payment` | Bearer — pay at arrival (simulation) |
-| POST | `/rides/{ride_id}/rate` | Bearer — rate + tip (simulation) |
 | POST | `/driver/status` | Bearer |
 | POST | `/driver/corridor` | Bearer — `corridor_id`: `Y1`, `Y2`, `D1`, etc. |
 | PATCH | `/driver/cabin-seats/{seat_id}` | Bearer |
